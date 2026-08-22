@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1736">
+  <meta name="description" content="Catálogo digital Fruto Import — Sennelier e Schmincke.">
+  <title>Fruto Import | Catálogo Digital</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    // Limpa service workers/caches de deployments antigos que possam ter usado este mesmo domínio.
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+        } catch (_) {}
+      });
+    }
+  </script>
+</head>
+<body>
+<header class="site-header">
+  <div class="topbar">
+    <button class="brand-logo" id="homeLogo" aria-label="Voltar ao início">
+      <span class="brand-mark">F</span>
+      <span class="brand-name">FRUTO <b>IMPORT</b></span>
+    </button>
+    <div class="header-search hidden" id="headerSearch">
+      <input id="search" placeholder="Pesquisar por produto, código ou categoria..." aria-label="Pesquisar produtos">
+      <button id="searchBtn" aria-label="Pesquisar">⌕</button>
+    </div>
+    <button class="quote-button" id="listBtn">Orçamento <span class="count" id="count">0</span></button>
+  </div>
+  <nav class="main-nav" aria-label="Navegação principal">
+    <div class="nav-inner">
+      <button data-view="home" class="nav-brand active">Início</button>
+      <button data-brand="Sennelier" class="nav-brand">Sennelier</button>
+      <button data-brand="Schmincke" class="nav-brand">Schmincke</button>
+      <div class="category-nav" id="cats" aria-label="Categorias"></div>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="landing" id="landing">
+    <div class="landing-copy">
+      <div>
+        <span class="eyebrow" id="landingEyebrow">CATÁLOGO DIGITAL · FRUTO IMPORT</span>
+        <h1 id="landingTitle">Duas referências mundiais em materiais artísticos.</h1>
+        <p id="landingIntro">Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.</p>
+      </div>
+      <div class="catalog-status" aria-label="Capacidade do catálogo">
+        <span><b id="totalCount">0</b> produtos cadastrados</span>
+        <span>Estrutura para até <b>4.000</b> produtos</span>
+      </div>
+    </div>
+
+    <div class="brand-choices brand-choices-v3">
+      <article class="brand-choice brand-showcase sennelier-card">
+        <div class="brand-showcase-media">
+          <img id="sennelierHeroImage" src="/assets/hero-sennelier.webp" alt="Destaque Sennelier com materiais artísticos" loading="eager" fetchpriority="high">
+        </div>
+        <div class="brand-card-content brand-card-content-v3">
+          <div class="country-line" id="sennelierKicker">Sennelier 🇫🇷</div>
+          <h2 id="sennelierTitle">SENNELIER</h2>
+          <p id="sennelierDescription">Desde 1887 — tradição francesa em pigmentos, pastéis, óleos, aquarelas e materiais para artistas.</p>
+          <div class="chips" aria-label="Destaques Sennelier">
+            <span id="sennelierChip1">até 2.000 produtos</span>
+            <span id="sennelierChip2">Pastéis</span>
+            <span id="sennelierChip3">Aquarelas</span>
+          </div>
+          <div class="brand-card-footer">
+            <span><b id="sennelierCount">0</b> cadastrados</span>
+            <button data-open-brand="Sennelier" id="sennelierButtonText">Ver Catálogo Sennelier →</button>
+          </div>
+        </div>
+      </article>
+
+      <article class="brand-choice brand-showcase schmincke-card">
+        <div class="brand-showcase-media">
+          <img id="schminckeHeroImage" src="/assets/hero-schmincke.webp" alt="Destaque Schmincke com materiais artísticos" loading="eager" fetchpriority="high">
+        </div>
+        <div class="brand-card-content brand-card-content-v3">
+          <div class="country-line" id="schminckeKicker">Schmincke 🇩🇪</div>
+          <h2 id="schminckeTitle">SCHMINCKE</h2>
+          <p id="schminckeDescription">Excelência alemã em aquarelas, tintas artísticas, Horadam e linhas profissionais de alta performance.</p>
+          <div class="chips" aria-label="Destaques Schmincke">
+            <span id="schminckeChip1">até 2.000 produtos</span>
+            <span id="schminckeChip2">Horadam</span>
+            <span id="schminckeChip3">Aero Color</span>
+          </div>
+          <div class="brand-card-footer">
+            <span><b id="schminckeCount">0</b> cadastrados</span>
+            <button data-open-brand="Schmincke" id="schminckeButtonText">Ver Catálogo Schmincke →</button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <div class="benefits">
+      <div><b id="benefit1Title">Busca rápida</b><span id="benefit1Text">Encontre por nome, código ou categoria.</span></div>
+      <div><b id="benefit2Title">Quantidade já na seleção</b><span id="benefit2Text">Informe a quantidade desejada antes de adicionar ao orçamento.</span></div>
+      <div><b id="benefit3Title">PDF + WhatsApp</b><span id="benefit3Text">Gere o PDF e abra automaticamente a conversa com a Fruto Import.</span></div>
+    </div>
+    <section class="home-videos hidden" id="homeVideosSection" aria-labelledby="homeVideosTitle">
+      <div class="home-videos-heading"><h2 id="homeVideosTitle">Novidades em Vídeo</h2><p id="homeVideosSubtitle"></p></div>
+      <div class="home-videos-grid" id="homeVideosGrid"></div>
+      <button class="home-videos-all hidden" id="homeVideosAll" type="button">Ver todos os vídeos</button>
+    </section>
+  </section>
+
+  <section class="catalog-section hidden" id="catalogSection">
+    <div class="catalog-hero" id="catalogHero">
+      <button class="back-home" id="backHome">← Todas as marcas</button>
+      <span class="catalog-country" id="catalogCountry"></span>
+      <h1 id="catalogTitle">Catálogo</h1>
+      <p id="catalogSubtitle"></p>
+    </div>
+    <div class="catalog-wrap">
+      <div class="catalog-bar">
+        <div><h2 id="productsTitle">Produtos</h2><span class="muted" id="result"></span></div>
+        <button class="filter-reset hidden" id="resetFilter">Limpar filtros</button>
+      </div>
+      <div class="series-filter hidden" id="seriesFilters" aria-label="Filtrar produtos por série"></div>
+      <div class="product-grid" id="grid"><div class="loading">Carregando produtos...</div></div>
+      <div class="load-more-wrap"><button class="load-more hidden" id="loadMore">Carregar mais produtos</button></div>
+    </div>
+  </section>
+</main>
+
+<div class="drawer-overlay" id="drawerOverlay"></div>
+<aside class="drawer" id="drawer" aria-label="Minha solicitação de orçamento" aria-hidden="true">
+  <div class="drawer-shell">
+    <div class="drawer-head">
+      <div><span class="eyebrow">FRUTO IMPORT</span><h2 id="quoteDrawerTitle">Minha solicitação</h2></div>
+      <button class="close" id="closeDrawer" aria-label="Fechar">×</button>
+    </div>
+    <p class="muted drawer-intro" id="quoteDrawerIntro">As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.</p>
+
+    <div class="quote-overview" id="quoteOverview">
+      <div class="overview-card"><span>Produtos</span><b id="overviewProducts">0</b></div>
+      <div class="overview-card"><span>Unidades</span><b id="overviewUnits">0</b></div>
+      <div class="overview-card overview-total"><span>Total estimado</span><b id="overviewTotal">R$ 0,00</b></div>
+    </div>
+
+    <div class="quote-layout">
+      <section class="quote-panel quote-form-panel">
+        <div class="panel-head"><h3>Dados da solicitação</h3><p>Preencha apenas se desejar enviar junto com o orçamento.</p></div>
+        <div class="customer-fields customer-fields-card">
+          <label id="customerNameLabel">Seu nome / empresa <span>opcional</span><input id="customerName" maxlength="100" placeholder="Ex.: Fruto"></label>
+          <label id="customerNoteLabel">Observação <span>opcional</span><textarea id="customerNote" maxlength="280" rows="3" placeholder="Ex.: Favor informar prazo de entrega."></textarea></label>
+        </div>
+        <div class="drawer-summary" id="drawerSummary"></div>
+        <div class="quote-actions">
+          <button class="send" id="sendWhatsApp">Gerar PDF + WhatsApp</button>
+          <button class="download-pdf" id="downloadPdf">Baixar PDF</button>
+          <button class="clear" id="clearList">Limpar lista</button>
+        </div>
+        <p class="share-note" id="shareNote">O sistema tenta compartilhar o PDF já anexado pelo menu do celular. Em aparelhos que não permitem isso, o PDF é baixado e o WhatsApp abre com uma mensagem curta para você anexar o arquivo.</p>
+      </section>
+      <section class="quote-panel quote-items-panel">
+        <div class="panel-head"><h3>Produtos selecionados</h3><p>Visual mais completo para conferência antes do envio.</p></div>
+        <div class="items quote-cards" id="items"></div>
+      </section>
+    </div>
+  </div>
+</aside>
+
+<div class="product-detail-modal hidden" id="productDetailModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Detalhes do produto">
+  <div class="product-detail-card">
+    <button class="product-detail-close" id="productDetailClose" aria-label="Fechar detalhes">×</button>
+    <div class="product-detail-media">
+      <img id="productDetailImage" alt="">
+      <div class="product-detail-thumbs" id="productDetailThumbs"></div>
+    </div>
+    <div class="product-detail-content">
+      <span class="brand-mini detail-brand" id="productDetailBrand"></span>
+      <h2 id="productDetailName"></h2>
+      <div class="product-detail-meta" id="productDetailMeta"></div>
+      <div id="productDetailPrice"></div>
+      <p class="product-detail-description" id="productDetailDescription"></p>
+      <div id="productDetailQty"></div>
+      <button class="product-select detail-add" id="productDetailAdd">+ Adicionar ao orçamento</button>
+    </div>
+  </div>
+</div>
+
+<div class="image-lightbox hidden" id="imageLightbox" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Foto ampliada do produto">
+  <button class="lightbox-close" id="lightboxClose" aria-label="Fechar imagem ampliada">×</button>
+  <button class="lightbox-nav lightbox-prev" id="lightboxPrev" aria-label="Foto anterior">‹</button>
+  <div class="lightbox-stage">
+    <img id="lightboxImage" alt="">
+    <div class="lightbox-caption" id="lightboxCaption"></div>
+  </div>
+  <button class="lightbox-nav lightbox-next" id="lightboxNext" aria-label="Próxima foto">›</button>
+</div>
+
+
+<div class="video-modal hidden" id="videoModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Vídeo em destaque">
+  <div class="video-modal-card">
+    <div class="video-modal-head"><b id="videoModalTitle">Vídeo</b><button id="videoModalClose" aria-label="Fechar vídeo">×</button></div>
+    <div class="video-player-wrap">
+      <iframe id="videoFrame" class="hidden" title="Vídeo" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+      <video id="videoDirect" class="hidden" controls playsinline></video>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/app.js" defer></script>
+</body>
+</html>

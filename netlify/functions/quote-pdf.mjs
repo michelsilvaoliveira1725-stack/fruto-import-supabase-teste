@@ -1,35 +1,11 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-function json(data, status = 200) {
-  return Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
-}
+import { getStore } from "@netlify/blobs";
+import { json } from "../lib/auth.mjs";
 
-
-const SUPABASE_URL = "https://scwrzdwxnkjqkiawvdve.supabase.co";
-const SUPABASE_KEY = "sb_publishable_f821-OWArHB9RaagXwsDCw_L9oEF1mO";
-const PRODUCTION_SETTINGS_URL = "https://fascinating-semolina-24494c.netlify.app/api/settings";
-
-async function readCatalog() {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_public_catalog`, {
-    method: "POST",
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: "{}"
-  });
-  if (!response.ok) throw new Error("Catálogo Supabase indisponível.");
-  const data = await response.json();
-  return Array.isArray(data?.products) ? data.products : [];
-}
-
-async function readSettings() {
-  try {
-    const response = await fetch(PRODUCTION_SETTINGS_URL, { cache: "no-store" });
-    if (response.ok) return await response.json();
-  } catch {}
-  return { businessName: "Fruto Import", whatsapp: "5511996576368" };
-}
+const CATALOG_STORE = "fruto-import-catalog";
+const SETTINGS_STORE = "fruto-import-settings";
+const PRODUCT_KEY = "products";
+const SETTINGS_KEY = "public";
 
 function clean(value, max = 180) {
   return String(value ?? "").trim().slice(0, max);
@@ -131,7 +107,8 @@ export default async (req) => {
   const requested = Array.isArray(body.items) ? body.items.slice(0, 250) : [];
   if (!requested.length) return json({ error: "Adicione produtos antes de gerar o PDF." }, 400);
 
-  const [products, settings] = await Promise.all([readCatalog(), readSettings()]);
+  const products = await getStore(CATALOG_STORE).get(PRODUCT_KEY, { type: "json", consistency: "strong" }) || [];
+  const settings = await getStore(SETTINGS_STORE).get(SETTINGS_KEY, { type: "json", consistency: "strong" }) || { businessName: "Fruto Import", whatsapp: "5511996576368" };
   const q = quoteSettings(settings.quote);
   const map = new Map(products.map(p => [String(p.code), p]));
   const items = requested.map(row => {

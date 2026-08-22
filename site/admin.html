@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1736">
+  <title>Admin | Fruto Import</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    // Limpa service workers/caches de deployments antigos que possam ter usado este mesmo domínio.
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", async () => {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map(r => r.unregister()));
+          if (window.caches) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map(k => caches.delete(k)));
+          }
+        } catch (_) {}
+      });
+    }
+  </script>
+</head>
+<body class="admin-body">
+<header class="admin-header">
+  <div class="topbar">
+    <div class="brand-logo" aria-label="Fruto Import">
+      <span class="brand-mark">F</span><span class="brand-name">FRUTO <b>IMPORT</b></span>
+    </div>
+    <a href="/" class="secondary" style="text-decoration:none">Ver catálogo</a>
+  </div>
+</header>
+<main class="admin-wrap">
+  <section id="authBox" class="login-card">
+    <span class="eyebrow">ÁREA RESTRITA</span>
+    <h1>Painel Fruto Import</h1>
+    <p class="muted" id="authIntro">Carregando...</p>
+    <div id="authNotice" class="notice hidden"></div>
+    <div id="setupFields" class="hidden">
+      <div class="field"><label>Chave inicial</label><input id="setupKey" type="password" autocomplete="off"></div>
+      <div class="field"><label>Crie sua senha</label><input id="setupPassword" type="password" autocomplete="new-password" minlength="8"></div>
+      <button class="primary" id="setupBtn">Configurar administrador</button>
+    </div>
+    <div id="loginFields" class="hidden">
+      <div class="field"><label>Senha</label><input id="loginPassword" type="password" autocomplete="current-password"></div>
+      <button class="primary" id="loginBtn">Entrar</button>
+      <button class="secondary" type="button" id="showResetBtn" style="margin-top:10px;width:100%">Esqueci minha senha / Redefinir</button>
+      <div id="resetFields" class="hidden admin-subpanel" style="margin-top:14px">
+        <h3>Redefinir senha</h3>
+        <p class="muted small">Use a chave inicial do projeto para criar uma nova senha.</p>
+        <div class="field"><label>Chave de recuperação</label><input id="resetKey" type="password" autocomplete="off"></div>
+        <div class="field"><label>Nova senha</label><input id="resetPassword" type="password" autocomplete="new-password" minlength="8"></div>
+        <div class="field"><label>Confirmar nova senha</label><input id="resetPasswordConfirm" type="password" autocomplete="new-password" minlength="8"></div>
+        <button class="primary" type="button" id="resetPasswordBtn">Redefinir senha</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="admin-heading">
+      <div><span class="eyebrow">PAINEL ADMINISTRATIVO</span><h1>Catálogo Fruto Import</h1><span class="muted">Painel organizado por área para facilitar o cadastro e a manutenção do catálogo.</span></div>
+      <div class="admin-stats">
+        <div class="stat"><b id="statSennelier">0</b><span>Sennelier / 2.000</span></div>
+        <div class="stat"><b id="statSchmincke">0</b><span>Schmincke / 2.000</span></div>
+        <button class="secondary" id="logoutBtn">Sair</button>
+      </div>
+    </div>
+    <div id="mainNotice" class="notice hidden"></div>
+
+    <div class="admin-shell">
+    <nav class="admin-section-nav" aria-label="Áreas do painel administrativo">
+      <button type="button" class="admin-section-tab" data-admin-section="overviewSection">
+        <span class="admin-tab-icon">⌂</span><span><b>Visão geral</b><small>Resumo e atalhos</small></span>
+      </button>
+      <button type="button" class="admin-section-tab active" data-admin-section="productsSection">
+        <span class="admin-tab-icon">▦</span><span><b>Produtos</b><small>Novo produto e cadastrados</small></span>
+      </button>
+      <button type="button" class="admin-section-tab" data-admin-section="homepageSection">
+        <span class="admin-tab-icon">✦</span><span><b>Página inicial</b><small>Imagens, textos e destaques</small></span>
+      </button>
+      <button type="button" class="admin-section-tab" data-admin-section="serviceSection">
+        <span class="admin-tab-icon">◉</span><span><b>Atendimento</b><small>WhatsApp do orçamento</small></span>
+      </button>
+    </nav>
+    <div class="admin-content">
+      <section class="admin-section hidden" id="overviewSection">
+        <div class="section-heading-block"><span class="eyebrow">VISÃO GERAL</span><h2>Resumo do catálogo</h2><p class="muted small">Acompanhe rapidamente os pontos que precisam de atenção e use os atalhos para chegar aos produtos certos.</p></div>
+        <div class="admin-overview-grid">
+          <button class="overview-card" type="button" data-overview-filter="all"><span>Total de produtos</span><b id="overviewTotal">0</b><small>Ver todos</small></button>
+          <button class="overview-card" type="button" data-overview-filter="available"><span>Disponíveis</span><b id="overviewAvailable">0</b><small>Prontos para orçamento</small></button>
+          <button class="overview-card" type="button" data-overview-filter="soldout"><span>Esgotados</span><b id="overviewSoldout">0</b><small>Revisar produtos</small></button>
+          <button class="overview-card warning" type="button" data-overview-filter="lowstock"><span>Baixo estoque</span><b id="overviewLowStock">0</b><small>3 unidades ou menos</small></button>
+          <button class="overview-card" type="button" data-overview-filter="noprice"><span>Sem preço</span><b id="overviewNoPrice">0</b><small>Revisar valores</small></button>
+          <button class="overview-card" type="button" data-overview-filter="nophoto"><span>Sem foto</span><b id="overviewNoPhoto">0</b><small>Completar cadastro</small></button>
+        </div>
+        <div class="panel overview-actions-panel">
+          <div><h3>Atalhos rápidos</h3><p class="muted small">As ações abaixo levam direto para a área desejada.</p></div>
+          <div class="overview-actions">
+            <button class="primary" type="button" id="overviewNewProduct">+ Novo produto</button>
+            <button class="secondary" type="button" id="overviewBulkPrice">Preço em massa</button>
+            <button class="secondary" type="button" id="overviewExportBackup">Exportar backup</button>
+          </div>
+        </div>
+      </section>
+
+    <section class="panel admin-section hidden" id="serviceSection">
+      <div class="section-heading-block"><span class="eyebrow">ATENDIMENTO</span><h2>Configuração de atendimento</h2></div>
+      <p class="muted small">Configure o WhatsApp e também escolha o que o cliente verá na área de orçamento, no PDF e no resumo enviado pelo WhatsApp.</p>
+      <div class="settings-row">
+        <div class="field"><label>WhatsApp da Fruto Import</label><input id="whatsapp" inputmode="numeric" maxlength="15" placeholder="5511996576368"></div>
+        <button class="primary" id="saveSettings">Salvar atendimento</button>
+      </div>
+      <div class="admin-subpanel" style="margin-top:18px">
+        <h3>Segurança do Admin</h3>
+        <p class="muted small">Altere sua senha quando quiser. Ao salvar, as sessões antigas serão encerradas.</p>
+        <div class="form-grid">
+          <div class="field"><label>Nova senha</label><input id="changePassword" type="password" autocomplete="new-password" minlength="8"></div>
+          <div class="field"><label>Confirmar nova senha</label><input id="changePasswordConfirm" type="password" autocomplete="new-password" minlength="8"></div>
+        </div>
+        <button class="secondary" type="button" id="changePasswordBtn">Alterar senha</button>
+      </div>
+
+      <div class="admin-subpanel quote-admin-box">
+        <h3>Personalizar orçamento</h3>
+        <div class="form-grid">
+          <div class="field full"><label>Título exibido ao cliente</label><input id="quoteTitleAdmin" maxlength="100"></div>
+          <div class="field full"><label>Texto de orientação</label><textarea id="quoteIntroAdmin" maxlength="280" rows="3"></textarea></div>
+        </div>
+        <div class="option-grid">
+          <label><input type="checkbox" id="quoteShowCustomer"> Campo nome / empresa</label>
+          <label><input type="checkbox" id="quoteShowNote"> Campo observação</label>
+          <label><input type="checkbox" id="quoteShowSummary"> Resumo de quantidades</label>
+          <label><input type="checkbox" id="quoteShowGrandTotal"> Total estimado</label>
+          <label><input type="checkbox" id="quoteShowDownloadPdf"> Botão “Baixar somente o PDF”</label>
+          <label><input type="checkbox" id="quoteShowShareNote"> Aviso sobre envio/anexo do PDF</label>
+        </div>
+        <h3 class="mini-heading">Cabeçalho e rodapé do PDF</h3>
+        <div class="form-grid">
+          <div class="field"><label>Nome no topo do PDF</label><input id="pdfHeaderTitleAdmin" maxlength="80" placeholder="FRUTO IMPORT"></div>
+          <div class="field"><label>Subtítulo do PDF</label><input id="pdfHeaderSubtitleAdmin" maxlength="100" placeholder="Solicitação de Orçamento"></div>
+          <div class="field"><label>Texto antes do WhatsApp</label><input id="pdfContactLabelAdmin" maxlength="80" placeholder="WhatsApp Fruto Import"></div>
+          <div class="field"><label>Texto do rodapé</label><input id="pdfFooterTextAdmin" maxlength="80" placeholder="Fruto Import"></div>
+        </div>
+        <h3 class="mini-heading">Colunas do orçamento</h3>
+        <div class="option-grid quote-columns-admin">
+          <label><input type="checkbox" id="quoteColProduct"> Produto</label>
+          <label><input type="checkbox" id="quoteColCode"> Código</label>
+          <label><input type="checkbox" id="quoteColSeries"> Série</label>
+          <label><input type="checkbox" id="quoteColSalePack"> Forma de venda</label>
+          <label><input type="checkbox" id="quoteColQuantity"> Quantidade</label>
+          <label><input type="checkbox" id="quoteColUnitPrice"> Valor do item</label>
+          <label><input type="checkbox" id="quoteColSubtotal"> Total do item</label>
+        </div>
+        <div class="actions quote-admin-save"><button class="primary" type="button" id="saveSettingsBottom">Salvar alterações do orçamento</button></div>
+      </div>
+    </section>
+
+    <section class="panel homepage-admin admin-section hidden" id="homepageSection">
+      <div class="panel-title-row">
+        <div>
+          <h2>Personalizar página inicial</h2>
+          <p class="muted small">Troque as imagens de destaque e os textos sempre que houver novidades. Essas alterações aparecem no catálogo sem precisar mexer no código.</p>
+        </div>
+        <button class="primary" id="saveHomeSettings">Salvar página inicial</button>
+      </div>
+
+      <div class="admin-subpanel">
+        <h3>Apresentação geral</h3>
+        <div class="form-grid">
+          <div class="field full"><label>Texto pequeno acima do título</label><input id="homeEyebrow" maxlength="100"></div>
+          <div class="field full"><label>Título principal</label><input id="homeTitle" maxlength="180"></div>
+          <div class="field full"><label>Texto de apresentação</label><textarea id="homeIntro" maxlength="360" rows="3"></textarea></div>
+        </div>
+      </div>
+
+      <div class="brand-admin-grid">
+        <div class="admin-subpanel brand-admin-card">
+          <h3>Sennelier</h3>
+          <input type="hidden" id="currentSennelierHero">
+          <div class="field"><label>Imagem de destaque / fundo</label><input id="sennelierHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="sennelierHeroPreview" class="hero-admin-preview" alt="Prévia Sennelier">
+          <button class="secondary small-button" type="button" id="resetSennelierHero">Usar imagem padrão</button>
+          <div class="field"><label>Identificação / país</label><input id="sennelierKickerAdmin" maxlength="80"></div>
+          <div class="field"><label>Título</label><input id="sennelierTitleAdmin" maxlength="80"></div>
+          <div class="field"><label>Descrição</label><textarea id="sennelierDescriptionAdmin" maxlength="360" rows="4"></textarea></div>
+          <div class="three-fields">
+            <div class="field"><label>Destaque 1</label><input id="sennelierChip1Admin" maxlength="60"></div>
+            <div class="field"><label>Destaque 2</label><input id="sennelierChip2Admin" maxlength="60"></div>
+            <div class="field"><label>Destaque 3</label><input id="sennelierChip3Admin" maxlength="60"></div>
+          </div>
+          <div class="field"><label>Texto do botão</label><input id="sennelierButtonAdmin" maxlength="80"></div>
+          <div class="field"><label>Título dentro do catálogo</label><input id="sennelierCatalogTitleAdmin" maxlength="100"></div>
+          <div class="field"><label>Texto dentro do catálogo</label><textarea id="sennelierCatalogSubtitleAdmin" maxlength="360" rows="3"></textarea></div>
+          <input type="hidden" id="currentSennelierCatalogHero">
+          <div class="field"><label>Imagem de fundo dentro do catálogo</label><input id="sennelierCatalogHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="sennelierCatalogHeroPreview" class="hero-admin-preview catalog-hero-admin-preview hidden" alt="Prévia do fundo do catálogo Sennelier">
+          <button class="secondary small-button" type="button" id="clearSennelierCatalogHero">Remover imagem do fundo do catálogo</button>
+        </div>
+
+        <div class="admin-subpanel brand-admin-card">
+          <h3>Schmincke</h3>
+          <input type="hidden" id="currentSchminckeHero">
+          <div class="field"><label>Imagem de destaque / fundo</label><input id="schminckeHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="schminckeHeroPreview" class="hero-admin-preview" alt="Prévia Schmincke">
+          <button class="secondary small-button" type="button" id="resetSchminckeHero">Usar imagem padrão</button>
+          <div class="field"><label>Identificação / país</label><input id="schminckeKickerAdmin" maxlength="80"></div>
+          <div class="field"><label>Título</label><input id="schminckeTitleAdmin" maxlength="80"></div>
+          <div class="field"><label>Descrição</label><textarea id="schminckeDescriptionAdmin" maxlength="360" rows="4"></textarea></div>
+          <div class="three-fields">
+            <div class="field"><label>Destaque 1</label><input id="schminckeChip1Admin" maxlength="60"></div>
+            <div class="field"><label>Destaque 2</label><input id="schminckeChip2Admin" maxlength="60"></div>
+            <div class="field"><label>Destaque 3</label><input id="schminckeChip3Admin" maxlength="60"></div>
+          </div>
+          <div class="field"><label>Texto do botão</label><input id="schminckeButtonAdmin" maxlength="80"></div>
+          <div class="field"><label>Título dentro do catálogo</label><input id="schminckeCatalogTitleAdmin" maxlength="100"></div>
+          <div class="field"><label>Texto dentro do catálogo</label><textarea id="schminckeCatalogSubtitleAdmin" maxlength="360" rows="3"></textarea></div>
+          <input type="hidden" id="currentSchminckeCatalogHero">
+          <div class="field"><label>Imagem de fundo dentro do catálogo</label><input id="schminckeCatalogHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="schminckeCatalogHeroPreview" class="hero-admin-preview catalog-hero-admin-preview hidden" alt="Prévia do fundo do catálogo Schmincke">
+          <button class="secondary small-button" type="button" id="clearSchminckeCatalogHero">Remover imagem do fundo do catálogo</button>
+        </div>
+      </div>
+
+      <div class="admin-subpanel video-admin-box">
+        <div class="panel-title-row compact-row">
+          <div><h3>Novidades em Vídeo</h3><p class="muted small">Ative ou desative a seção quando quiser. Use links de YouTube, Instagram, TikTok ou vídeo direto; a miniatura pode ser enviada aqui.</p></div>
+          <label class="switch-line"><input type="checkbox" id="videosEnabledAdmin"> <b>Mostrar vídeos na página inicial</b></label>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Título da seção</label><input id="videosTitleAdmin" maxlength="100"></div>
+          <div class="field"><label>Subtítulo</label><input id="videosSubtitleAdmin" maxlength="220"></div>
+          <div class="field"><label><input type="checkbox" id="videosShowAllAdmin"> Mostrar botão final</label><input id="videosAllButtonTextAdmin" maxlength="80" placeholder="Ver todos os vídeos"></div>
+          <div class="field"><label>Link do botão final</label><input id="videosAllButtonUrlAdmin" maxlength="500" placeholder="https://..."></div>
+        </div>
+        <div id="videoSlotsAdmin" class="video-slots-admin"></div>
+      </div>
+
+      <div class="admin-subpanel">
+        <h3>Faixa de benefícios</h3>
+        <div class="benefits-admin-grid">
+          <div><div class="field"><label>Título 1</label><input id="benefit1TitleAdmin" maxlength="80"></div><div class="field"><label>Texto 1</label><input id="benefit1TextAdmin" maxlength="160"></div></div>
+          <div><div class="field"><label>Título 2</label><input id="benefit2TitleAdmin" maxlength="80"></div><div class="field"><label>Texto 2</label><input id="benefit2TextAdmin" maxlength="160"></div></div>
+          <div><div class="field"><label>Título 3</label><input id="benefit3TitleAdmin" maxlength="80"></div><div class="field"><label>Texto 3</label><input id="benefit3TextAdmin" maxlength="160"></div></div>
+        </div>
+      </div>
+      <div class="actions"><button class="primary" id="saveHomeSettingsBottom">Salvar página inicial</button></div>
+    </section>
+
+    <section class="admin-section" id="productsSection">
+      <div class="section-heading-block products-heading">
+        <div><span class="eyebrow">PRODUTOS</span><h2>Gerenciar produtos</h2><p class="muted small">Cadastre novos itens e consulte os produtos separados por marca.</p></div>
+        <div class="product-brand-tabs" role="tablist" aria-label="Filtrar produtos por marca">
+          <button type="button" class="product-brand-tab active" data-product-brand="all">Todos</button>
+          <button type="button" class="product-brand-tab" data-product-brand="Sennelier">Sennelier <span id="brandCountSennelier">0</span></button>
+          <button type="button" class="product-brand-tab" data-product-brand="Schmincke">Schmincke <span id="brandCountSchmincke">0</span></button>
+        </div>
+      </div>
+
+      <section class="panel product-editor-panel">
+        <div class="panel-title-row compact-title-row">
+          <div><h2 id="formTitle">Novo produto</h2><p class="muted small">Cadastre produto, série, forma de venda, preço, desconto e fotos.</p></div>
+          <span class="admin-step-badge">1 · Cadastro</span>
+        </div>
+      <form id="productForm">
+        <input type="hidden" id="originalCode">
+        <div class="form-grid">
+          <div class="field"><label>Código / SKU *</label><input id="code" required maxlength="60" placeholder="Ex.: SEN-0001"></div>
+          <div class="field"><label>Nome do produto *</label><input id="name" required maxlength="180" placeholder="Nome completo do produto"></div>
+          <div class="field full"><label>Descrição resumida <span class="muted">(opcional)</span></label><textarea id="shortDescription" maxlength="500" rows="3" placeholder="Ex.: Aquarela extrafina com alta concentração de pigmentos, excelente transparência e luminosidade."></textarea><span class="muted small">Aparece somente quando o cliente abrir os detalhes do produto.</span></div>
+          <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+          <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Aquarelas, Pastéis, Óleo"></div>
+          <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro dessa categoria.</span></div>
+          <div class="field"><label>Forma de venda *</label><select id="salePack" required><option value="1">Unitário (1 unidade)</option><option value="3">Fechado com 3 unidades</option></select><span class="muted small">Escolha por produto. Fechado com 3 inicia em 3 e aceita somente múltiplos de 3 no orçamento.</span></div>
+          <div class="field"><label>Disponibilidade *</label><select id="available" required><option value="true">Disponível</option><option value="false">Esgotado</option></select><span class="muted small">Esgotado continua visível no catálogo, mas não pode ser adicionado ao orçamento.</span></div>
+          <div class="field full stock-control-field"><label class="switch-line"><input id="stockControl" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Controlar quantidade disponível</span></label><span class="muted small">Opcional. O cliente não vê a quantidade em estoque, mas o sistema impede solicitar acima do limite.</span></div>
+          <div class="field hidden" id="stockQuantityField"><label>Quantidade disponível</label><input id="stockQuantity" type="number" min="0" max="999999" step="1" inputmode="numeric" placeholder="Ex.: 5"><span class="muted small">A quantidade aparece somente no Admin. Se não houver quantidade suficiente para a forma de venda, o produto fica esgotado automaticamente.</span></div>
+          <div class="field"><label>Preço do produto (R$)</label><input id="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 89.90"><span class="muted small">Se deixar vazio, o produto ficará sem preço definido no catálogo.</span></div>
+          <div class="field"><label>Desconto (%)</label><input id="discountPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Ex.: 10"></div>
+          <div class="field full discount-control">
+            <label class="switch-line"><input id="discountActive" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Ativar desconto no catálogo</span></label>
+            <span class="muted small">Ativado: mostra o preço original, o percentual de desconto e o preço final. Desativado: mostra somente o preço normal.</span>
+          </div>
+          <div class="field full product-images-field">
+            <label>Fotos do produto (JPG, PNG ou WebP)</label>
+            <input id="imageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+            <div class="admin-product-images" id="productImagesPreview"></div>
+            <div class="product-images-actions"><button type="button" class="secondary small-button hidden" id="clearNewImages">Limpar novas fotos</button></div>
+            <span class="muted small">Você pode usar até 10 fotos por produto. A primeira foto será a principal. Clique em × para remover uma foto já cadastrada.</span>
+          </div>
+        </div>
+        <div class="actions"><button class="primary" type="submit" id="saveBtn">Salvar produto</button><button class="primary hidden" type="button" id="saveDuplicateNext">Salvar e duplicar próximo</button><button class="secondary hidden" type="button" id="endDuplicateSession">Encerrar duplicação</button><button class="secondary hidden" type="button" id="cancelEdit">Cancelar edição</button></div>
+      </form>
+    </section>
+
+      <section class="panel bulk-price-panel">
+        <div class="panel-title-row compact-title-row">
+          <div><h2>Preço em massa</h2><p class="muted small">Use quando vários produtos da mesma marca, categoria ou série tiverem o mesmo valor. O cadastro individual continua disponível acima.</p></div>
+          <span class="admin-step-badge">Opcional · Em massa</span>
+        </div>
+        <div class="form-grid bulk-price-filters">
+          <div class="field"><label>Marca *</label><select id="bulkBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+          <div class="field"><label>Categoria *</label><select id="bulkCategory"></select></div>
+          <div class="field"><label>Série</label><select id="bulkSeries"><option value="">Todas / sem filtro</option></select></div>
+          <div class="field"><label>Situação do preço</label><select id="bulkPriceState"><option value="all">Todos</option><option value="noprice">Somente sem preço</option><option value="withprice">Somente com preço</option></select></div>
+          <div class="field"><label>Novo valor (R$) *</label><input id="bulkPrice" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 60.24"></div>
+        </div>
+        <div class="actions"><button class="secondary" type="button" id="bulkPreviewBtn">Revisar produtos antes de salvar</button></div>
+        <div id="bulkPreviewBox" class="bulk-preview hidden">
+          <div class="bulk-preview-head"><div><b id="bulkPreviewTitle">Prévia</b><p class="muted small" id="bulkPreviewInfo"></p></div><button class="primary" type="button" id="bulkSaveBtn">Salvar preços em massa</button></div>
+          <div class="admin-list bulk-preview-list"><table class="admin-table"><thead><tr><th>Código</th><th>Produto</th><th>Série</th><th>Valor atual</th><th>Novo valor</th></tr></thead><tbody id="bulkPreviewRows"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="panel product-list-panel">
+      <div class="catalog-bar">
+        <div><div class="list-title-line"><h2>Produtos cadastrados</h2><span class="admin-step-badge">2 · Organizado</span></div><span class="muted small" id="adminResult"></span></div>
+        <div class="admin-search"><input id="adminSearch" placeholder="Pesquisar código, produto, marca, categoria ou série..."></div>
+      </div>
+      <div class="availability-tabs" role="tablist" aria-label="Filtrar disponibilidade">
+        <button type="button" class="availability-tab active" data-availability="all">Todos</button>
+        <button type="button" class="availability-tab" data-availability="available">Disponíveis</button>
+        <button type="button" class="availability-tab" data-availability="soldout">Esgotados</button>
+      </div>
+      <div class="admin-extra-filters">
+        <label>Filtro rápido
+          <select id="adminQualityFilter">
+            <option value="all">Todos os cadastros</option>
+            <option value="lowstock">Baixo estoque (até 3)</option>
+            <option value="noprice">Sem preço</option>
+            <option value="nophoto">Sem foto</option>
+            <option value="stockcontrol">Com controle de quantidade</option>
+          </select>
+        </label>
+        <button class="secondary small-button" type="button" id="clearAdminFilters">Limpar filtros</button>
+      </div>
+      <div id="productGroups" class="product-groups"></div>
+      <div id="noRows" class="empty-state hidden">Nenhum produto encontrado.</div>
+      </section>
+    </section>
+    </div>
+    </div>
+  </section>
+</main>
+<script src="/admin.js" defer></script>
+</body>
+</html>
