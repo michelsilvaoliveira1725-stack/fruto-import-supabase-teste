@@ -1,0 +1,2 @@
+Fruto Import TESTE SUPABASE 1.2 STORAGE
+Migrador resiliente: continua mesmo com imagens antigas problemáticas.

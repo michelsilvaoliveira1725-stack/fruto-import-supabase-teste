@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migração de imagens · Fruto Import</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#f4f6fb;color:#0c1b3a;margin:0;padding:24px}.box{max-width:680px;margin:40px auto;background:#fff;border-radius:18px;padding:24px;box-shadow:0 10px 30px rgba(0,0,0,.08)}h1{margin-top:0}.status{padding:14px;border-radius:12px;background:#eef3ff;margin:16px 0;white-space:pre-wrap}.bar{height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden}.bar>div{height:100%;width:0;background:#1547c7;transition:width .2s}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}button{border:0;border-radius:12px;padding:12px 18px;font-weight:700;cursor:pointer}.primary{background:#0b1d47;color:#fff}.secondary{background:#e9edf7;color:#0b1d47}button:disabled{opacity:.55;cursor:not-allowed}.ok{background:#eaf8ef;color:#175b2b}.err{background:#fff0f0;color:#9f1c1c}.small{font-size:13px;color:#637083}</style>
+</head>
+<body>
+<div class="box">
+  <h1>Migração de imagens para Supabase Storage</h1>
+  <p>Esta página é somente para o projeto de teste. Ela copia as fotos atuais para o Supabase Storage e atualiza a cópia do banco. O site principal não é alterado.</p>
+  <div class="bar"><div id="bar"></div></div>
+  <div id="status" class="status">Pronto para iniciar.</div>
+  <div class="actions">
+    <button id="start" class="primary">Iniciar migração</button>
+    <button id="catalog" class="secondary" onclick="location.href='/'">Voltar ao catálogo</button>
+  </div>
+  <p class="small">Pode levar alguns minutos. Mantenha esta página aberta até aparecer “Migração concluída”. Imagens com problema serão puladas automaticamente para não travar o restante.</p>
+</div>
+<script>
+const endpoint='https://scwrzdwxnkjqkiawvdve.supabase.co/functions/v1/migrate-product-images';
+const anon='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjd3J6ZHd4bmtqcWtpYXd2ZHZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODczNDQ1MDIsImV4cCI6MjEwMjkyMDUwMn0.blYc2y4trIXoWPyI2ToUFYTVQpxdLKsXqQ3_jOFfmq8';
+const start=document.getElementById('start'), status=document.getElementById('status'), bar=document.getElementById('bar');
+let initialRemaining=null, migratedTotal=0, failedTotal=0;
+function setStatus(t,cls=''){status.textContent=t;status.className='status '+cls}
+async function batch(){
+  const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':'Bearer '+anon,'apikey':anon,'Content-Type':'application/json'},body:JSON.stringify({limit:25})});
+  if(!r.ok) throw new Error('HTTP '+r.status+' ao chamar a migração');
+  return await r.json();
+}
+start.onclick=async()=>{
+  start.disabled=true; migratedTotal=0; failedTotal=0; initialRemaining=null;
+  try{
+    while(true){
+      setStatus('Copiando imagens...\nAguarde, não feche esta página.');
+      const d=await batch();
+      if(!d.ok) throw new Error(d.error||'Falha desconhecida');
+      if(initialRemaining===null) initialRemaining=(d.remaining||0)+(d.migrated||0);
+      migratedTotal+=d.migrated||0; failedTotal+=(d.failed||[]).length;
+      const remaining=Number(d.remaining||0);
+      const total=Math.max(initialRemaining, migratedTotal+remaining,1);
+      bar.style.width=Math.min(100,Math.round((migratedTotal/total)*100))+'%';
+      setStatus(`Migradas: ${migratedTotal}\nRestantes: ${remaining}\nFalhas nesta execução: ${failedTotal}`);
+      const totalFailed=Number(d.failedTotal ?? failedTotal);
+      if(d.done||remaining===0){
+        bar.style.width='100%';
+        setStatus(`Migração concluída.\nImagens migradas nesta execução: ${migratedTotal}\nImagens que ficaram com falha: ${totalFailed}\n\nO catálogo já pode usar todas as imagens que migraram. As falhas foram isoladas e não interromperam o processo.`, totalFailed ? '' : 'ok');
+        break
+      }
+      await new Promise(res=>setTimeout(res,350));
+    }
+  }catch(e){setStatus('Erro na migração: '+(e?.message||e),'err');start.disabled=false}
+};
+</script>
+</body>
+</html>

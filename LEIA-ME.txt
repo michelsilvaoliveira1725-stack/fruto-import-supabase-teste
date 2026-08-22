@@ -1,0 +1,12 @@
+FRUTO IMPORT — TESTE SUPABASE 1.1
+
+Projeto de teste separado.
+- Produtos: Supabase Database
+- Imagens: migração para Supabase Storage
+- Site principal não é alterado
+
+Após publicar no projeto de TESTE da Netlify, abra /migrar-imagens.html e clique em Iniciar migração.
+Depois volte ao catálogo e atualize a página.
+
+
+TESTE SUPABASE 1.2: migração de imagens continua mesmo quando algumas URLs antigas falham. As falhas são isoladas e registradas no Supabase.
