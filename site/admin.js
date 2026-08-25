@@ -61,6 +61,8 @@ let activeAvailability = "all";
 let activeQualityFilter = "all";
 let activeAdminSection = localStorage.getItem("fruto_import_admin_section") || "productsSection";
 let editingImages = [];
+let pendingImageFiles = [];
+let pendingPrimaryFile = null;
 let duplicateSessionActive = false;
 let saveContinueDuplicate = false;
 function productCodeKey(value) {
@@ -672,6 +674,8 @@ function resetForm() {
   $("productForm").reset();
   $("originalCode").value = "";
   editingImages = [];
+  pendingImageFiles = [];
+  pendingPrimaryFile = null;
   removedImages = [];
   $("formTitle").textContent = "Novo produto";
   $("cancelEdit").classList.add("hidden");
@@ -719,6 +723,8 @@ function editProduct(code) {
   $("discountPercent").value = discountValue(p.discountPercent) || "";
   $("discountActive").checked = Boolean(p.discountActive);
   editingImages = productImages(p);
+  pendingImageFiles = [];
+  pendingPrimaryFile = null;
   removedImages = [];
   $("imageFiles").value = "";
   renderProductImageEditor();
@@ -745,6 +751,8 @@ function fillDuplicateForm(p, message = true) {
   $("discountPercent").value = discountValue(p.discountPercent) || "";
   $("discountActive").checked = Boolean(p.discountActive);
   editingImages = productImages(p);
+  pendingImageFiles = [];
+  pendingPrimaryFile = null;
   removedImages = [];
   $("imageFiles").value = "";
   renderProductImageEditor();
@@ -811,13 +819,30 @@ function renderProductImageEditor() {
   box.textContent = "";
 
   editingImages.forEach((url, index) => {
+    const isPrimary = pendingPrimaryFile === null && index === 0;
     const tile = document.createElement("div");
-    tile.className = "admin-image-tile";
+    tile.className = `admin-image-tile${isPrimary ? " primary" : ""}`;
     const img = document.createElement("img");
     img.src = url;
     img.alt = `Foto ${index + 1}`;
     const badge = document.createElement("span");
-    badge.textContent = index === 0 ? "Principal" : `${index + 1}`;
+    badge.textContent = isPrimary ? "Principal" : `${index + 1}`;
+
+    if (!isPrimary) {
+      const makePrimary = document.createElement("button");
+      makePrimary.type = "button";
+      makePrimary.className = "admin-image-primary";
+      makePrimary.textContent = "Tornar principal";
+      makePrimary.setAttribute("aria-label", `Tornar a foto ${index + 1} principal`);
+      makePrimary.addEventListener("click", () => {
+        const [selected] = editingImages.splice(index, 1);
+        if (selected) editingImages.unshift(selected);
+        pendingPrimaryFile = null;
+        renderProductImageEditor();
+      });
+      tile.appendChild(makePrimary);
+    }
+
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "admin-image-remove";
@@ -832,27 +857,57 @@ function renderProductImageEditor() {
     box.appendChild(tile);
   });
 
-  const files = Array.from($("imageFiles")?.files || []);
-  files.forEach((file, index) => {
+  pendingImageFiles.forEach((file, index) => {
+    const becomesPrimaryByDefault = !editingImages.length && pendingPrimaryFile === null && index === 0;
+    const isPrimary = pendingPrimaryFile === file || becomesPrimaryByDefault;
     const tile = document.createElement("div");
-    tile.className = "admin-image-tile pending";
+    tile.className = `admin-image-tile pending${isPrimary ? " primary" : ""}`;
     const img = document.createElement("img");
-    img.src = URL.createObjectURL(file);
+    const previewUrl = URL.createObjectURL(file);
+    img.src = previewUrl;
     img.alt = `Nova foto ${index + 1}`;
-    img.onload = () => URL.revokeObjectURL(img.src);
+    img.onload = () => URL.revokeObjectURL(previewUrl);
     const badge = document.createElement("span");
-    badge.textContent = "Nova";
-    tile.append(img, badge);
+    badge.textContent = isPrimary ? "Principal" : "Nova";
+
+    if (!isPrimary) {
+      const makePrimary = document.createElement("button");
+      makePrimary.type = "button";
+      makePrimary.className = "admin-image-primary";
+      makePrimary.textContent = "Tornar principal";
+      makePrimary.setAttribute("aria-label", `Tornar a nova foto ${index + 1} principal`);
+      makePrimary.addEventListener("click", () => {
+        const [selected] = pendingImageFiles.splice(index, 1);
+        if (selected) {
+          pendingImageFiles.unshift(selected);
+          pendingPrimaryFile = selected;
+        }
+        renderProductImageEditor();
+      });
+      tile.appendChild(makePrimary);
+    }
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "admin-image-remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", `Remover nova foto ${index + 1}`);
+    remove.addEventListener("click", () => {
+      const [removed] = pendingImageFiles.splice(index, 1);
+      if (removed && pendingPrimaryFile === removed) pendingPrimaryFile = null;
+      renderProductImageEditor();
+    });
+    tile.append(img, badge, remove);
     box.appendChild(tile);
   });
 
-  if (!editingImages.length && !files.length) {
+  if (!editingImages.length && !pendingImageFiles.length) {
     const empty = document.createElement("div");
     empty.className = "admin-images-empty";
     empty.textContent = "Nenhuma foto cadastrada.";
     box.appendChild(empty);
   }
-  $("clearNewImages").classList.toggle("hidden", !files.length);
+  $("clearNewImages").classList.toggle("hidden", !pendingImageFiles.length);
 }
 
 async function optimizeImage(file, maxSide = 1600, quality = 0.84) {
@@ -911,14 +966,22 @@ async function saveProduct(e) {
   const btn = $("saveBtn");
   btn.disabled = true;
   const original = $("originalCode").value;
-  const files = Array.from($("imageFiles").files || []);
+  const files = [...pendingImageFiles];
   const uploadedUrls = [];
   try {
     if (editingImages.length + files.length > MAX_PRODUCT_IMAGES) {
       throw new Error(`Use no máximo ${MAX_PRODUCT_IMAGES} fotos por produto.`);
     }
     for (const file of files) uploadedUrls.push(await uploadImage(file));
-    const images = [...editingImages, ...uploadedUrls].slice(0, MAX_PRODUCT_IMAGES);
+    const primaryPendingIndex = pendingPrimaryFile ? files.indexOf(pendingPrimaryFile) : -1;
+    let images;
+    if (primaryPendingIndex >= 0 && uploadedUrls[primaryPendingIndex]) {
+      const primaryUrl = uploadedUrls[primaryPendingIndex];
+      const remainingUploads = uploadedUrls.filter((_, index) => index !== primaryPendingIndex);
+      images = [primaryUrl, ...editingImages, ...remainingUploads].slice(0, MAX_PRODUCT_IMAGES);
+    } else {
+      images = [...editingImages, ...uploadedUrls].slice(0, MAX_PRODUCT_IMAGES);
+    }
     const payload = {
       code: $("code").value,
       name: $("name").value,
@@ -1216,14 +1279,33 @@ $("logoutBtn").addEventListener("click", () => {
   showAuth();
 });
 $("imageFiles").addEventListener("change", () => {
-  const files = Array.from($("imageFiles").files || []);
-  if (editingImages.length + files.length > MAX_PRODUCT_IMAGES) {
+  const selected = Array.from($("imageFiles").files || []);
+  if (!selected.length) return;
+
+  const room = MAX_PRODUCT_IMAGES - editingImages.length - pendingImageFiles.length;
+  if (room <= 0) {
     alert(`Use no máximo ${MAX_PRODUCT_IMAGES} fotos por produto.`);
     $("imageFiles").value = "";
+    return;
   }
+
+  const accepted = selected.slice(0, room);
+  pendingImageFiles.push(...accepted);
+  if (accepted.length < selected.length) {
+    alert(`Foram adicionadas ${accepted.length} foto(s). O limite é de ${MAX_PRODUCT_IMAGES} fotos por produto.`);
+  }
+
+  // Limpa apenas o seletor do navegador. As novas fotos ficam guardadas em
+  // pendingImageFiles, permitindo escolher outra foto depois sem substituir as anteriores.
+  $("imageFiles").value = "";
   renderProductImageEditor();
 });
-$("clearNewImages").addEventListener("click", () => { $("imageFiles").value = ""; renderProductImageEditor(); });
+$("clearNewImages").addEventListener("click", () => {
+  pendingImageFiles = [];
+  pendingPrimaryFile = null;
+  $("imageFiles").value = "";
+  renderProductImageEditor();
+});
 $("sennelierHeroFile").addEventListener("change", () => previewFile("sennelierHeroFile", "sennelierHeroPreview"));
 $("schminckeHeroFile").addEventListener("change", () => previewFile("schminckeHeroFile", "schminckeHeroPreview"));
 
