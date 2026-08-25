@@ -150,11 +150,35 @@ function productImages(product) {
   return [...new Set(source.map(v => String(v || "").trim()).filter(Boolean))].slice(0, 10);
 }
 
-// V16.2: usa sempre a URL original salva no produto.
-// Alguns navegadores/rotas do Netlify não tratavam de forma consistente os parâmetros
-// extras adicionados na V16.1, embora a mesma imagem abrisse normalmente pela URL original.
+// V16.4: tenta primeiro a URL original e, se ela falhar naquele navegador/rede,
+// usa uma rota segura do próprio site para carregar a mesma imagem.
+const RELIABLE_IMAGE_HOSTS = new Set([
+  "scwrzdwxnkjqkiawvdve.supabase.co",
+  "cdn.shopify.com",
+  "img2.activant-inet.com",
+  "cdn.abicart.com"
+]);
+
+function imageCandidates(urls) {
+  const out = [];
+  const source = Array.isArray(urls) ? urls : [urls];
+  for (const value of source) {
+    const raw = String(value || "").trim();
+    if (!raw || out.includes(raw)) continue;
+    out.push(raw);
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      if (parsed.protocol === "https:" && RELIABLE_IMAGE_HOSTS.has(parsed.hostname.toLowerCase())) {
+        const proxy = `/api/image-proxy?url=${encodeURIComponent(parsed.href)}`;
+        if (!out.includes(proxy)) out.push(proxy);
+      }
+    } catch {}
+  }
+  return out;
+}
+
 function attachReliableImage(img, urls, { alt = "", lazy = true, onEmpty = null } = {}) {
-  const candidates = [...new Set((Array.isArray(urls) ? urls : [urls]).map(v => String(v || "").trim()).filter(Boolean))];
+  const candidates = imageCandidates(urls);
   img.alt = alt;
   if (lazy) img.loading = "lazy";
   else img.removeAttribute("loading");

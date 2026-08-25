@@ -116,6 +116,51 @@ function productImages(product) {
   return [...new Set(source.map(v => String(v || "").trim()).filter(Boolean))].slice(0, MAX_PRODUCT_IMAGES);
 }
 
+// V16.4: fallback de visualização para que fotos do Supabase e dos CDNs atuais
+// abram de forma consistente em computadores/redes diferentes. A URL original
+// continua sendo a que é salva no cadastro do produto.
+const ADMIN_RELIABLE_IMAGE_HOSTS = new Set([
+  "scwrzdwxnkjqkiawvdve.supabase.co",
+  "cdn.shopify.com",
+  "img2.activant-inet.com",
+  "cdn.abicart.com"
+]);
+
+function adminImageCandidates(url) {
+  const raw = String(url || "").trim();
+  if (!raw) return [];
+  const out = [raw];
+  try {
+    const parsed = new URL(raw, window.location.origin);
+    if (parsed.protocol === "https:" && ADMIN_RELIABLE_IMAGE_HOSTS.has(parsed.hostname.toLowerCase())) {
+      out.push(`/api/image-proxy?url=${encodeURIComponent(parsed.href)}`);
+    }
+  } catch {}
+  return [...new Set(out)];
+}
+
+function attachAdminReliableImage(img, url, { alt = "", lazy = true } = {}) {
+  const candidates = adminImageCandidates(url);
+  img.alt = alt;
+  if (lazy) img.loading = "lazy";
+  else img.removeAttribute("loading");
+  img.decoding = "async";
+  let index = 0;
+  const load = () => {
+    if (index >= candidates.length) {
+      img.removeAttribute("src");
+      img.classList.add("image-load-failed");
+      return;
+    }
+    img.classList.remove("image-load-failed");
+    img.src = candidates[index];
+  };
+  img.onload = () => img.classList.remove("image-load-failed");
+  img.onerror = () => { index += 1; load(); };
+  load();
+  return img;
+}
+
 function seriesLabel(value) {
   const clean = String(value || "").trim().replace(/^s[eé]rie\s*/i, "");
   return clean ? `Série ${clean}` : "";
@@ -588,7 +633,7 @@ function createAdminProductTable(list) {
     const tdImg = document.createElement("td");
     const images = productImages(p);
     if (images[0]) {
-      const img = document.createElement("img"); img.className = "thumb"; img.src = images[0]; img.alt = p.name; img.loading = "lazy"; tdImg.appendChild(img);
+      const img = document.createElement("img"); img.className = "thumb"; attachAdminReliableImage(img, images[0], { alt: p.name, lazy: true }); tdImg.appendChild(img);
       if (images.length > 1) { const count = document.createElement("div"); count.className = "admin-photo-count"; count.textContent = `${images.length} fotos`; tdImg.appendChild(count); }
     } else tdImg.textContent = "—";
 
@@ -823,8 +868,7 @@ function renderProductImageEditor() {
     const tile = document.createElement("div");
     tile.className = `admin-image-tile${isPrimary ? " primary" : ""}`;
     const img = document.createElement("img");
-    img.src = url;
-    img.alt = `Foto ${index + 1}`;
+    attachAdminReliableImage(img, url, { alt: `Foto ${index + 1}`, lazy: false });
     const badge = document.createElement("span");
     badge.textContent = isPrimary ? "Principal" : `${index + 1}`;
 
