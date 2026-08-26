@@ -260,7 +260,7 @@
 
       <section class="panel product-editor-panel">
         <div class="panel-title-row compact-title-row">
-          <div><h2 id="formTitle">Novo produto</h2><p class="muted small">Cadastre produto, série, forma de venda, preço, desconto e fotos.</p></div>
+          <div><h2 id="formTitle">Novo produto</h2><p class="muted small">Cadastre produto, variação/tamanho, série, forma de venda, preço, desconto e fotos.</p></div>
           <span class="admin-step-badge">1 · Cadastro</span>
         </div>
       <form id="productForm">
@@ -270,8 +270,9 @@
           <div class="field"><label>Nome do produto *</label><input id="name" required maxlength="180" placeholder="Nome completo do produto"></div>
           <div class="field full"><label>Descrição resumida <span class="muted">(opcional)</span></label><textarea id="shortDescription" maxlength="500" rows="3" placeholder="Ex.: Aquarela extrafina com alta concentração de pigmentos, excelente transparência e luminosidade."></textarea><span class="muted small">Aparece somente quando o cliente abrir os detalhes do produto.</span></div>
           <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
-          <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Aquarelas, Pastéis, Óleo"></div>
-          <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro dessa categoria.</span></div>
+          <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Pastel Oleoso, Bastão Óleo, Aquarela"></div>
+          <div class="field"><label>Variação / tamanho <span class="muted">(opcional)</span></label><input id="variation" maxlength="80" placeholder="Ex.: 5 ml, 36 ml, 38 ml, 96 ml"><span class="muted small">Produtos da mesma categoria podem ser separados por tamanho ou apresentação sem criar novas categorias.</span></div>
+          <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro da categoria e da variação selecionada.</span></div>
           <div class="field"><label>Forma de venda *</label><select id="salePack" required><option value="1">Unitário (1 unidade)</option><option value="3">Fechado com 3 unidades</option></select><span class="muted small">Escolha por produto. Fechado com 3 inicia em 3 e aceita somente múltiplos de 3 no orçamento.</span></div>
           <div class="field"><label>Disponibilidade *</label><select id="available" required><option value="true">Disponível</option><option value="false">Esgotado</option></select><span class="muted small">Esgotado continua visível no catálogo, mas não pode ser adicionado ao orçamento.</span></div>
           <div class="field full stock-control-field"><label class="switch-line"><input id="stockControl" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Controlar quantidade disponível</span></label><span class="muted small">Opcional. O cliente não vê a quantidade em estoque, mas o sistema impede solicitar acima do limite.</span></div>
@@ -294,6 +295,26 @@
       </form>
     </section>
 
+      <section class="panel bulk-organize-panel">
+        <div class="panel-title-row compact-title-row">
+          <div><h2>Organizar categoria e variação em massa</h2><p class="muted small">Use para juntar categorias que representam o mesmo produto em tamanhos diferentes. Ex.: “Pastel Oleoso 5ml” → categoria “Pastel Oleoso” + variação “5 ml”. Preço, estoque, fotos e desconto não são alterados.</p></div>
+          <span class="admin-step-badge">Organização · Em massa</span>
+        </div>
+        <div class="form-grid organize-filters">
+          <div class="field"><label>Marca *</label><select id="organizeBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+          <div class="field"><label>Categoria atual *</label><select id="organizeCategory"></select></div>
+          <div class="field"><label>Variação atual</label><select id="organizeCurrentVariation"><option value="">Todas / sem filtro</option></select></div>
+          <div class="field"><label>Série</label><select id="organizeSeries"><option value="">Todas / sem filtro</option></select></div>
+          <div class="field"><label>Nova categoria *</label><input id="organizeNewCategory" maxlength="100" placeholder="Ex.: Pastel Oleoso"></div>
+          <div class="field"><label>Nova variação / tamanho</label><input id="organizeNewVariation" maxlength="80" placeholder="Ex.: 5 ml"></div>
+        </div>
+        <div class="actions"><button class="secondary" type="button" id="organizePreviewBtn">Revisar produtos antes de salvar</button></div>
+        <div id="organizePreviewBox" class="bulk-preview hidden">
+          <div class="bulk-preview-head"><div><b id="organizePreviewTitle">Prévia</b><p class="muted small" id="organizePreviewInfo"></p></div><button class="primary" type="button" id="organizeSaveBtn">Aplicar organização</button></div>
+          <div class="admin-list bulk-preview-list"><table class="admin-table"><thead><tr><th>Código</th><th>Produto</th><th>Categoria atual</th><th>Nova categoria</th><th>Variação</th></tr></thead><tbody id="organizePreviewRows"></tbody></table></div>
+        </div>
+      </section>
+
       <section class="panel bulk-price-panel">
         <div class="panel-title-row compact-title-row">
           <div><h2>Preço em massa</h2><p class="muted small">Use quando vários produtos da mesma marca, categoria ou série tiverem o mesmo valor. O cadastro individual continua disponível acima.</p></div>
@@ -302,6 +323,7 @@
         <div class="form-grid bulk-price-filters">
           <div class="field"><label>Marca *</label><select id="bulkBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
           <div class="field"><label>Categoria *</label><select id="bulkCategory"></select></div>
+          <div class="field"><label>Variação / tamanho</label><select id="bulkVariation"><option value="">Todas / sem filtro</option></select></div>
           <div class="field"><label>Série</label><select id="bulkSeries"><option value="">Todas / sem filtro</option></select></div>
           <div class="field"><label>Situação do preço</label><select id="bulkPriceState"><option value="all">Todos</option><option value="noprice">Somente sem preço</option><option value="withprice">Somente com preço</option></select></div>
           <div class="field"><label>Novo valor (R$) *</label><input id="bulkPrice" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 60.24"></div>
@@ -316,7 +338,7 @@
       <section class="panel product-list-panel">
       <div class="catalog-bar">
         <div><div class="list-title-line"><h2>Produtos cadastrados</h2><span class="admin-step-badge">2 · Organizado</span></div><span class="muted small" id="adminResult"></span></div>
-        <div class="admin-search"><input id="adminSearch" placeholder="Pesquisar código, produto, marca, categoria ou série..."></div>
+        <div class="admin-search"><input id="adminSearch" placeholder="Pesquisar código, produto, marca, categoria, variação/tamanho ou série..."></div>
       </div>
       <div class="availability-tabs" role="tablist" aria-label="Filtrar disponibilidade">
         <button type="button" class="availability-tab active" data-availability="all">Todos</button>

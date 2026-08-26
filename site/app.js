@@ -57,6 +57,7 @@ let products = [];
 let settings = { businessName: "Fruto Import", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 let currentBrand = "";
 let currentCat = "Todos";
+let currentVariation = "Todas";
 let currentSeries = "Todas";
 let lightboxImages = [];
 let lightboxIndex = 0;
@@ -217,6 +218,22 @@ function seriesLabel(value) {
 }
 
 function compareSeries(a, b) {
+  return String(a).localeCompare(String(b), "pt-BR", { numeric: true, sensitivity: "base" });
+}
+
+const NO_VARIATION = "__sem_variacao__";
+function variationValue(value) {
+  return String(value || "").trim();
+}
+function variationKey(product) {
+  return variationValue(product?.variation) || NO_VARIATION;
+}
+function variationLabel(value) {
+  return value === NO_VARIATION ? "Sem variação" : String(value || "").trim();
+}
+function compareVariation(a, b) {
+  if (a === NO_VARIATION) return 1;
+  if (b === NO_VARIATION) return -1;
   return String(a).localeCompare(String(b), "pt-BR", { numeric: true, sensitivity: "base" });
 }
 
@@ -431,6 +448,7 @@ function setNavActive(value) {
 function showHome() {
   currentBrand = "";
   currentCat = "Todos";
+  currentVariation = "Todas";
   currentSeries = "Todas";
   visibleLimit = PAGE_SIZE;
   $("landing").classList.remove("hidden");
@@ -446,6 +464,7 @@ function openBrand(brand) {
   if (!BRANDS.includes(brand)) return;
   currentBrand = brand;
   currentCat = "Todos";
+  currentVariation = "Todas";
   currentSeries = "Todas";
   visibleLimit = PAGE_SIZE;
   $("landing").classList.add("hidden");
@@ -488,14 +507,54 @@ function categories() {
     b.className = cat === currentCat ? "active" : "";
     b.addEventListener("click", () => {
       currentCat = cat;
+      currentVariation = "Todas";
       currentSeries = "Todas";
       visibleLimit = PAGE_SIZE;
       categories();
-      seriesFilters();
       render();
     });
     box.appendChild(b);
   });
+  variationFilters();
+}
+
+function variationFilters() {
+  const box = $("variationFilters");
+  if (!box) return seriesFilters();
+  const categoryProducts = currentCat === "Todos" ? [] : products.filter(p => p.brand === currentBrand && p.cat === currentCat);
+  const values = [...new Set(categoryProducts.map(variationKey))].sort(compareVariation);
+  const hasNamedVariation = values.some(value => value !== NO_VARIATION);
+
+  if (!hasNamedVariation) {
+    currentVariation = "Todas";
+    box.textContent = "";
+    box.classList.add("hidden");
+    seriesFilters();
+    return;
+  }
+
+  if (currentVariation !== "Todas" && !values.includes(currentVariation)) currentVariation = "Todas";
+  box.textContent = "";
+  const title = document.createElement("span");
+  title.className = "variation-filter-label";
+  title.textContent = "Variações / tamanhos:";
+  box.appendChild(title);
+
+  ["Todas", ...values].forEach(value => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = value === currentVariation ? "active" : "";
+    button.textContent = value === "Todas" ? "Todas as variações" : variationLabel(value);
+    button.addEventListener("click", () => {
+      currentVariation = value;
+      currentSeries = "Todas";
+      visibleLimit = PAGE_SIZE;
+      variationFilters();
+      render();
+    });
+    box.appendChild(button);
+  });
+  box.classList.remove("hidden");
   seriesFilters();
 }
 
@@ -503,7 +562,7 @@ function seriesFilters() {
   const box = $("seriesFilters");
   if (!box) return;
   const values = currentCat === "Todos" ? [] : [...new Set(products
-    .filter(p => p.brand === currentBrand && p.cat === currentCat)
+    .filter(p => p.brand === currentBrand && p.cat === currentCat && (currentVariation === "Todas" || variationKey(p) === currentVariation))
     .map(p => seriesValue(p.series))
     .filter(Boolean))].sort(compareSeries);
 
@@ -542,8 +601,9 @@ function filteredProducts() {
   return products.filter(p =>
     p.brand === currentBrand &&
     (currentCat === "Todos" || p.cat === currentCat) &&
+    (currentVariation === "Todas" || variationKey(p) === currentVariation) &&
     (currentSeries === "Todas" || seriesValue(p.series) === currentSeries) &&
-    (!q || `${p.code} ${p.name} ${p.brand} ${p.cat} ${p.series || ""}`.toLowerCase().includes(q))
+    (!q || `${p.code} ${p.name} ${p.brand} ${p.cat} ${p.variation || ""} ${p.series || ""}`.toLowerCase().includes(q))
   );
 }
 
@@ -675,6 +735,8 @@ function openProductDetail(product) {
   $("productDetailName").textContent = product.name;
   const meta = [
     `Código: ${product.code}`,
+    product.cat || "",
+    variationValue(product.variation),
     product.series ? seriesLabel(product.series) : "",
     `Forma de venda: ${salePackLabel(product)}`,
     isAvailable(product) ? "Disponível" : "Esgotado"
@@ -705,8 +767,10 @@ function render() {
   if (!currentBrand) return;
   const list = filteredProducts();
   const shown = list.slice(0, visibleLimit);
-  $("result").textContent = `${list.length.toLocaleString("pt-BR")} produto(s) encontrado(s)${currentSeries !== "Todas" ? ` · ${seriesLabel(currentSeries)}` : ""}`;
-  $("resetFilter").classList.toggle("hidden", currentCat === "Todos" && currentSeries === "Todas" && !$("search").value.trim());
+  const variationInfo = currentVariation !== "Todas" ? ` · ${variationLabel(currentVariation)}` : "";
+  const seriesInfo = currentSeries !== "Todas" ? ` · ${seriesLabel(currentSeries)}` : "";
+  $("result").textContent = `${list.length.toLocaleString("pt-BR")} produto(s) encontrado(s)${variationInfo}${seriesInfo}`;
+  $("resetFilter").classList.toggle("hidden", currentCat === "Todos" && currentVariation === "Todas" && currentSeries === "Todas" && !$("search").value.trim());
   const grid = $("grid");
   grid.textContent = "";
 
@@ -784,6 +848,7 @@ function render() {
     const cat = document.createElement("div");
     cat.className = "product-category";
     const categoryParts = [p.cat];
+    if (variationValue(p.variation)) categoryParts.push(variationValue(p.variation));
     if (p.series) categoryParts.push(seriesLabel(p.series));
     if (salePack(p) === 3) categoryParts.push("Fechado com 3");
     cat.textContent = categoryParts.join(" · ");
@@ -1201,7 +1266,7 @@ $("homeLogo").addEventListener("click", showHome);
 $("backHome").addEventListener("click", showHome);
 $("search").addEventListener("input", () => { if (currentBrand) { visibleLimit = PAGE_SIZE; render(); } });
 $("searchBtn").addEventListener("click", () => { if (currentBrand) render(); });
-$("resetFilter").addEventListener("click", () => { $("search").value = ""; currentCat = "Todos"; currentSeries = "Todas"; visibleLimit = PAGE_SIZE; categories(); render(); });
+$("resetFilter").addEventListener("click", () => { $("search").value = ""; currentCat = "Todos"; currentVariation = "Todas"; currentSeries = "Todas"; visibleLimit = PAGE_SIZE; categories(); render(); });
 $("loadMore").addEventListener("click", () => { visibleLimit += PAGE_SIZE; render(); });
 $("listBtn").addEventListener("click", openDrawer);
 $("closeDrawer").addEventListener("click", closeDrawer);

@@ -166,6 +166,10 @@ function seriesLabel(value) {
   return clean ? `Série ${clean}` : "";
 }
 
+function variationValue(value) {
+  return String(value || "").trim();
+}
+
 function salePackValue(value) {
   return Number(value) === 3 ? 3 : 1;
 }
@@ -248,56 +252,6 @@ function setAdminSection(sectionId, persist = true) {
   document.querySelectorAll(".admin-section").forEach(section => {
     section.classList.toggle("hidden", section.id !== target);
   });
-  
-function refreshBulkFilters() {
-  const brand = $("bulkBrand")?.value || "Sennelier";
-  const cats = [...new Set(products.filter(p => p.brand === brand).map(p => p.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
-  const catSel = $("bulkCategory"); if (!catSel) return;
-  const currentCat = catSel.value;
-  catSel.innerHTML = cats.map(c => `<option value="${String(c).replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${c}</option>`).join("");
-  if (cats.includes(currentCat)) catSel.value = currentCat;
-  refreshBulkSeries();
-}
-function refreshBulkSeries() {
-  const brand=$("bulkBrand")?.value || "Sennelier"; const cat=$("bulkCategory")?.value || "";
-  const vals=[...new Set(products.filter(p=>p.brand===brand && (!cat || p.cat===cat)).map(p=>String(p.series||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
-  const sel=$("bulkSeries"); if(!sel) return; const cur=sel.value;
-  sel.innerHTML='<option value="">Todas / sem filtro</option>'+vals.map(v=>`<option value="${v.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${seriesLabel(v)}</option>`).join('');
-  if(vals.includes(cur)) sel.value=cur;
-}
-function bulkMatches() {
-  const brand=$("bulkBrand").value, cat=$("bulkCategory").value, series=$("bulkSeries").value;
-  const priceState=$("bulkPriceState")?.value || "all";
-  return products.filter(p=>{
-    const base=p.brand===brand && p.cat===cat && (!series || String(p.series||"").trim()===series);
-    if(!base) return false;
-    const hasPrice=numericPrice(p.price)!==null;
-    if(priceState==="noprice") return !hasPrice;
-    if(priceState==="withprice") return hasPrice;
-    return true;
-  });
-}
-function previewBulkPrice() {
-  const price=numericPrice($("bulkPrice").value); if(price===null) return notice("mainNotice","Informe um valor válido para aplicar em massa.","error");
-  const list=bulkMatches(); if(!list.length) return notice("mainNotice","Nenhum produto encontrado com esses filtros.","error");
-  const box=$("bulkPreviewBox"), rows=$("bulkPreviewRows"); rows.textContent="";
-  list.slice(0,300).forEach(p=>{ const tr=document.createElement("tr"); [p.code,p.name,p.series?seriesLabel(p.series):"—",numericPrice(p.price)===null?"—":formatMoney(p.price),formatMoney(price)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td)}); rows.appendChild(tr); });
-  $("bulkPreviewTitle").textContent=`${list.length} produto(s) serão alterados`;
-  const priceStateLabel = $("bulkPriceState")?.value === "noprice" ? " · somente sem preço" : $("bulkPriceState")?.value === "withprice" ? " · somente com preço" : "";
-  $("bulkPreviewInfo").textContent=`${$("bulkBrand").value} · ${$("bulkCategory").value}${$("bulkSeries").value ? ` · ${seriesLabel($("bulkSeries").value)}` : " · todas as séries"}${priceStateLabel}. Novo valor: ${formatMoney(price)}.`;
-  box.classList.remove("hidden");
-}
-async function saveBulkPrice() {
-  const price=numericPrice($("bulkPrice").value), list=bulkMatches(); if(price===null || !list.length) return;
-  if(!confirm(`Aplicar ${formatMoney(price)} em ${list.length} produto(s)?`)) return;
-  const btn=$("bulkSaveBtn"); btn.disabled=true;
-  try { await api("/api/products/bulk-price",{method:"PUT",json:{brand:$("bulkBrand").value,cat:$("bulkCategory").value,series:$("bulkSeries").value,priceState:$("bulkPriceState")?.value || "all",price}}); await loadProducts(); refreshBulkFilters(); $("bulkPreviewBox").classList.add("hidden"); notice("mainNotice",`Preço atualizado em ${list.length} produto(s).`,"success"); }
-  catch(e){ notice("mainNotice",e.message,"error"); } finally { btn.disabled=false; }
-}
-function clearCatalogHero(brand) {
-  const isSen=brand==="Sennelier"; const cur=$(isSen?"currentSennelierCatalogHero":"currentSchminckeCatalogHero"); const input=$(isSen?"sennelierCatalogHeroFile":"schminckeCatalogHeroFile"); const preview=$(isSen?"sennelierCatalogHeroPreview":"schminckeCatalogHeroPreview");
-  cur.value=""; input.value=""; preview.src=""; preview.classList.add("hidden"); notice("mainNotice",`Imagem do catálogo ${brand} removida da prévia. Clique em Salvar página inicial para confirmar.`,"");
-}
 
 document.querySelectorAll(".admin-section-tab").forEach(button => {
     const active = button.dataset.adminSection === target;
@@ -399,6 +353,7 @@ async function loadProducts() {
   updateStats();
   renderRows();
   refreshBulkFilters();
+  refreshOrganizeFilters();
 }
 
 async function loadSettings() {
@@ -609,7 +564,7 @@ function currentFiltered() {
   return products.filter(p => {
     const brandOk = activeAdminBrand === "all" || p.brand === activeAdminBrand;
     const availabilityOk = activeAvailability === "all" || (activeAvailability === "available" ? isAvailable(p) : !isAvailable(p));
-    const searchOk = !q || `${p.code} ${p.name} ${p.brand} ${p.cat} ${p.series || ""} ${salePackLabel(p)} ${isAvailable(p) ? "disponível" : "esgotado"}`.toLowerCase().includes(q);
+    const searchOk = !q || `${p.code} ${p.name} ${p.brand} ${p.cat} ${p.variation || ""} ${p.series || ""} ${salePackLabel(p)} ${isAvailable(p) ? "disponível" : "esgotado"}`.toLowerCase().includes(q);
     const qualityOk = activeQualityFilter === "all"
       || (activeQualityFilter === "lowstock" && stockControlEnabled(p) && isAvailable(p) && stockQuantityValue(p.stockQuantity) <= 3)
       || (activeQualityFilter === "noprice" && numericPrice(p.price) === null)
@@ -645,7 +600,7 @@ function createAdminProductTable(list) {
     tdName.append(top, small);
 
     const tdMeta = document.createElement("td");
-    tdMeta.textContent = `${p.series ? `${seriesLabel(p.series)} · ` : ""}${salePackLabel(p)}${stockControlEnabled(p) ? ` · Estoque: ${stockQuantityValue(p.stockQuantity)}` : ""}`;
+    tdMeta.textContent = `${variationValue(p.variation) ? `${variationValue(p.variation)} · ` : ""}${p.series ? `${seriesLabel(p.series)} · ` : ""}${salePackLabel(p)}${stockControlEnabled(p) ? ` · Estoque: ${stockQuantityValue(p.stockQuantity)}` : ""}`;
 
     const tdPrice = document.createElement("td"); tdPrice.className = "admin-price-cell";
     const basePrice = numericPrice(p.price), discount = discountValue(p.discountPercent);
@@ -698,17 +653,31 @@ function renderRows() {
       const avail = catProducts.filter(isAvailable).length; counts.textContent = `${catProducts.length} produto(s) · ${avail} disp. · ${catProducts.length-avail} esg.`;
       summary.append(title, counts); details.appendChild(summary);
 
-      const withSeries = catProducts.some(p => String(p.series || "").trim());
-      if (withSeries) {
-        const seriesValues = [...new Set(catProducts.map(p => String(p.series || "").trim() || "__semserie"))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+      const variationKeys = [...new Set(catProducts.map(p => variationValue(p.variation) || "__semvariacao"))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+      const hasVariations = variationKeys.some(value => value !== "__semvariacao");
+      const appendSeriesGroups = (container, subset) => {
+        const withSeries = subset.some(p => String(p.series || "").trim());
+        if (!withSeries) { container.appendChild(createAdminProductTable(subset)); return; }
+        const seriesValues = [...new Set(subset.map(p => String(p.series || "").trim() || "__semserie"))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
         seriesValues.forEach(series => {
-          const seriesProducts = catProducts.filter(p => (String(p.series || "").trim() || "__semserie") === series);
+          const seriesProducts = subset.filter(p => (String(p.series || "").trim() || "__semserie") === series);
           const block = document.createElement("div"); block.className = "admin-series-group";
           const head = document.createElement("div"); head.className = "admin-series-group-head";
           head.textContent = series === "__semserie" ? `Sem série · ${seriesProducts.length}` : `${seriesLabel(series)} · ${seriesProducts.length}`;
-          block.append(head, createAdminProductTable(seriesProducts)); details.appendChild(block);
+          block.append(head, createAdminProductTable(seriesProducts)); container.appendChild(block);
         });
-      } else details.appendChild(createAdminProductTable(catProducts));
+      };
+      if (hasVariations) {
+        variationKeys.forEach(variation => {
+          const variationProducts = catProducts.filter(p => (variationValue(p.variation) || "__semvariacao") === variation);
+          const block = document.createElement("div"); block.className = "admin-variation-group";
+          const head = document.createElement("div"); head.className = "admin-variation-group-head";
+          head.textContent = variation === "__semvariacao" ? `Sem variação · ${variationProducts.length}` : `${variation} · ${variationProducts.length}`;
+          block.appendChild(head);
+          appendSeriesGroups(block, variationProducts);
+          details.appendChild(block);
+        });
+      } else appendSeriesGroups(details, catProducts);
       brandSection.appendChild(details);
     });
     host.appendChild(brandSection);
@@ -730,6 +699,7 @@ function resetForm() {
   saveContinueDuplicate = false;
   $("saveBtn").textContent = "Salvar produto";
   $("brand").value = activeAdminBrand === "Schmincke" ? "Schmincke" : "Sennelier";
+  $("variation").value = "";
   $("series").value = "";
   $("shortDescription").value = "";
   $("salePack").value = "1";
@@ -757,6 +727,7 @@ function editProduct(code) {
   $("name").value = p.name;
   $("brand").value = p.brand;
   $("cat").value = p.cat;
+  $("variation").value = p.variation || "";
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
   $("salePack").value = String(salePackValue(p.salePack));
@@ -785,6 +756,7 @@ function fillDuplicateForm(p, message = true) {
   $("name").value = p.name || "";
   $("brand").value = p.brand || "Sennelier";
   $("cat").value = p.cat || "";
+  $("variation").value = p.variation || "";
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
   $("salePack").value = String(salePackValue(p.salePack));
@@ -1031,6 +1003,7 @@ async function saveProduct(e) {
       name: $("name").value,
       brand: $("brand").value,
       cat: $("cat").value,
+      variation: $("variation").value,
       series: $("series").value,
       shortDescription: $("shortDescription").value,
       available: $("available").value === "true",
@@ -1242,20 +1215,28 @@ function refreshBulkFilters() {
   const currentCat = catSel.value;
   catSel.innerHTML = cats.map(c => `<option value="${String(c).replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${c}</option>`).join("");
   if (cats.includes(currentCat)) catSel.value = currentCat;
+  refreshBulkVariation();
+}
+function refreshBulkVariation() {
+  const brand=$("bulkBrand")?.value || "Sennelier", cat=$("bulkCategory")?.value || "";
+  const vals=[...new Set(products.filter(p=>p.brand===brand && (!cat || p.cat===cat)).map(p=>variationValue(p.variation)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const sel=$("bulkVariation"); if(!sel) return refreshBulkSeries(); const cur=sel.value;
+  sel.innerHTML='<option value="">Todas / sem filtro</option>'+vals.map(v=>`<option value="${v.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${v}</option>`).join('');
+  if(vals.includes(cur)) sel.value=cur;
   refreshBulkSeries();
 }
 function refreshBulkSeries() {
-  const brand=$("bulkBrand")?.value || "Sennelier"; const cat=$("bulkCategory")?.value || "";
-  const vals=[...new Set(products.filter(p=>p.brand===brand && (!cat || p.cat===cat)).map(p=>String(p.series||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const brand=$("bulkBrand")?.value || "Sennelier", cat=$("bulkCategory")?.value || "", variation=$("bulkVariation")?.value || "";
+  const vals=[...new Set(products.filter(p=>p.brand===brand && (!cat || p.cat===cat) && (!variation || variationValue(p.variation)===variation)).map(p=>String(p.series||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
   const sel=$("bulkSeries"); if(!sel) return; const cur=sel.value;
   sel.innerHTML='<option value="">Todas / sem filtro</option>'+vals.map(v=>`<option value="${v.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${seriesLabel(v)}</option>`).join('');
   if(vals.includes(cur)) sel.value=cur;
 }
 function bulkMatches() {
-  const brand=$("bulkBrand").value, cat=$("bulkCategory").value, series=$("bulkSeries").value;
+  const brand=$("bulkBrand").value, cat=$("bulkCategory").value, variation=$("bulkVariation")?.value || "", series=$("bulkSeries").value;
   const priceState=$("bulkPriceState")?.value || "all";
   return products.filter(p=>{
-    const base=p.brand===brand && p.cat===cat && (!series || String(p.series||"").trim()===series);
+    const base=p.brand===brand && p.cat===cat && (!variation || variationValue(p.variation)===variation) && (!series || String(p.series||"").trim()===series);
     if(!base) return false;
     const hasPrice=numericPrice(p.price)!==null;
     if(priceState==="noprice") return !hasPrice;
@@ -1270,15 +1251,62 @@ function previewBulkPrice() {
   list.slice(0,300).forEach(p=>{ const tr=document.createElement("tr"); [p.code,p.name,p.series?seriesLabel(p.series):"—",numericPrice(p.price)===null?"—":formatMoney(p.price),formatMoney(price)].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td)}); rows.appendChild(tr); });
   $("bulkPreviewTitle").textContent=`${list.length} produto(s) serão alterados`;
   const priceStateLabel = $("bulkPriceState")?.value === "noprice" ? " · somente sem preço" : $("bulkPriceState")?.value === "withprice" ? " · somente com preço" : "";
-  $("bulkPreviewInfo").textContent=`${$("bulkBrand").value} · ${$("bulkCategory").value}${$("bulkSeries").value ? ` · ${seriesLabel($("bulkSeries").value)}` : " · todas as séries"}${priceStateLabel}. Novo valor: ${formatMoney(price)}.`;
+  const variationLabel = $("bulkVariation")?.value ? ` · ${$("bulkVariation").value}` : " · todas as variações";
+  $("bulkPreviewInfo").textContent=`${$("bulkBrand").value} · ${$("bulkCategory").value}${variationLabel}${$("bulkSeries").value ? ` · ${seriesLabel($("bulkSeries").value)}` : " · todas as séries"}${priceStateLabel}. Novo valor: ${formatMoney(price)}.`;
   box.classList.remove("hidden");
 }
 async function saveBulkPrice() {
   const price=numericPrice($("bulkPrice").value), list=bulkMatches(); if(price===null || !list.length) return;
   if(!confirm(`Aplicar ${formatMoney(price)} em ${list.length} produto(s)?`)) return;
   const btn=$("bulkSaveBtn"); btn.disabled=true;
-  try { await api("/api/products/bulk-price",{method:"PUT",json:{brand:$("bulkBrand").value,cat:$("bulkCategory").value,series:$("bulkSeries").value,priceState:$("bulkPriceState")?.value || "all",price}}); await loadProducts(); refreshBulkFilters(); $("bulkPreviewBox").classList.add("hidden"); notice("mainNotice",`Preço atualizado em ${list.length} produto(s).`,"success"); }
+  try { await api("/api/products/bulk-price",{method:"PUT",json:{brand:$("bulkBrand").value,cat:$("bulkCategory").value,variation:$("bulkVariation")?.value || "",series:$("bulkSeries").value,priceState:$("bulkPriceState")?.value || "all",price}}); await loadProducts(); refreshBulkFilters(); $("bulkPreviewBox").classList.add("hidden"); notice("mainNotice",`Preço atualizado em ${list.length} produto(s).`,"success"); }
   catch(e){ notice("mainNotice",e.message,"error"); } finally { btn.disabled=false; }
+}
+
+function refreshOrganizeFilters() {
+  const brand = $("organizeBrand")?.value || "Sennelier";
+  const cats = [...new Set(products.filter(p => p.brand === brand).map(p => p.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const sel = $("organizeCategory"); if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = cats.map(c => `<option value="${String(c).replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${c}</option>`).join("");
+  if (cats.includes(cur)) sel.value = cur;
+  refreshOrganizeSubfilters();
+}
+function refreshOrganizeSubfilters() {
+  const brand=$("organizeBrand")?.value || "Sennelier", cat=$("organizeCategory")?.value || "";
+  const subset=products.filter(p=>p.brand===brand && p.cat===cat);
+  const variations=[...new Set(subset.map(p=>variationValue(p.variation)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const vsel=$("organizeCurrentVariation"); if(vsel){ const cur=vsel.value; vsel.innerHTML='<option value="">Todas / sem filtro</option>'+variations.map(v=>`<option value="${v.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${v}</option>`).join(''); if(variations.includes(cur)) vsel.value=cur; }
+  const series=[...new Set(subset.map(p=>String(p.series||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR",{numeric:true}));
+  const ssel=$("organizeSeries"); if(ssel){ const cur=ssel.value; ssel.innerHTML='<option value="">Todas / sem filtro</option>'+series.map(v=>`<option value="${v.replace(/&/g,"&amp;").replace(/"/g,"&quot;")}">${seriesLabel(v)}</option>`).join(''); if(series.includes(cur)) ssel.value=cur; }
+  if ($("organizeNewCategory") && !$("organizeNewCategory").value) $("organizeNewCategory").value = cat;
+}
+function organizeMatches() {
+  const brand=$("organizeBrand").value, cat=$("organizeCategory").value, variation=$("organizeCurrentVariation")?.value || "", series=$("organizeSeries")?.value || "";
+  return products.filter(p=>p.brand===brand && p.cat===cat && (!variation || variationValue(p.variation)===variation) && (!series || String(p.series||"").trim()===series));
+}
+function previewOrganize() {
+  const newCat=String($("organizeNewCategory")?.value || "").trim(), newVariation=String($("organizeNewVariation")?.value || "").trim();
+  if(!newCat) return notice("mainNotice","Informe a nova categoria.","error");
+  const list=organizeMatches(); if(!list.length) return notice("mainNotice","Nenhum produto encontrado com esses filtros.","error");
+  const rows=$("organizePreviewRows"); rows.textContent="";
+  list.slice(0,300).forEach(p=>{ const tr=document.createElement("tr"); [p.code,p.name,p.cat,newCat,newVariation||"—"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.appendChild(td)}); rows.appendChild(tr); });
+  $("organizePreviewTitle").textContent=`${list.length} produto(s) serão reorganizados`;
+  $("organizePreviewInfo").textContent=`${$("organizeBrand").value} · ${$("organizeCategory").value} → ${newCat}${newVariation ? ` · ${newVariation}` : " · sem variação"}. Preço, estoque, fotos e desconto permanecem iguais.`;
+  $("organizePreviewBox").classList.remove("hidden");
+}
+async function saveOrganize() {
+  const list=organizeMatches(), newCat=String($("organizeNewCategory")?.value || "").trim(), newVariation=String($("organizeNewVariation")?.value || "").trim();
+  if(!newCat || !list.length) return;
+  if(!confirm(`Reorganizar ${list.length} produto(s) para “${newCat}”${newVariation ? ` / ${newVariation}` : ""}?`)) return;
+  const btn=$("organizeSaveBtn"); btn.disabled=true;
+  try {
+    await api("/api/products/bulk-organize",{method:"PUT",json:{brand:$("organizeBrand").value,cat:$("organizeCategory").value,currentVariation:$("organizeCurrentVariation")?.value || "",series:$("organizeSeries")?.value || "",newCat,newVariation}});
+    await loadProducts();
+    $("organizePreviewBox").classList.add("hidden");
+    $("organizeNewVariation").value="";
+    notice("mainNotice",`${list.length} produto(s) reorganizados com sucesso.`,"success");
+  } catch(e){ notice("mainNotice",e.message,"error"); } finally { btn.disabled=false; }
 }
 function clearCatalogHero(brand) {
   const isSen=brand==="Sennelier"; const cur=$(isSen?"currentSennelierCatalogHero":"currentSchminckeCatalogHero"); const input=$(isSen?"sennelierCatalogHeroFile":"schminckeCatalogHeroFile"); const preview=$(isSen?"sennelierCatalogHeroPreview":"schminckeCatalogHeroPreview");
@@ -1373,8 +1401,15 @@ $("schminckeCatalogHeroFile")?.addEventListener("change", () => previewFile("sch
 $("clearSennelierCatalogHero")?.addEventListener("click", () => clearCatalogHero("Sennelier"));
 $("clearSchminckeCatalogHero")?.addEventListener("click", () => clearCatalogHero("Schmincke"));
 $("bulkBrand")?.addEventListener("change", () => { refreshBulkFilters(); $("bulkPreviewBox")?.classList.add("hidden"); });
-$("bulkCategory")?.addEventListener("change", () => { refreshBulkSeries(); $("bulkPreviewBox")?.classList.add("hidden"); });
+$("bulkCategory")?.addEventListener("change", () => { refreshBulkVariation(); $("bulkPreviewBox")?.classList.add("hidden"); });
+$("bulkVariation")?.addEventListener("change", () => { refreshBulkSeries(); $("bulkPreviewBox")?.classList.add("hidden"); });
 $("bulkSeries")?.addEventListener("change", () => $("bulkPreviewBox")?.classList.add("hidden"));
+$("organizeBrand")?.addEventListener("change", () => { if($("organizeNewCategory")) $("organizeNewCategory").value=""; refreshOrganizeFilters(); $("organizePreviewBox")?.classList.add("hidden"); });
+$("organizeCategory")?.addEventListener("change", () => { if($("organizeNewCategory")) $("organizeNewCategory").value=$("organizeCategory").value; refreshOrganizeSubfilters(); $("organizePreviewBox")?.classList.add("hidden"); });
+$("organizeCurrentVariation")?.addEventListener("change", () => $("organizePreviewBox")?.classList.add("hidden"));
+$("organizeSeries")?.addEventListener("change", () => $("organizePreviewBox")?.classList.add("hidden"));
+$("organizePreviewBtn")?.addEventListener("click", previewOrganize);
+$("organizeSaveBtn")?.addEventListener("click", saveOrganize);
 $("bulkPreviewBtn")?.addEventListener("click", previewBulkPrice);
 $("bulkSaveBtn")?.addEventListener("click", saveBulkPrice);
 
