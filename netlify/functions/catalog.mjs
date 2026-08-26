@@ -56,6 +56,9 @@ export default async (req, context) => {
   if (req.method === "PUT" && code === "bulk-price") {
     return await callWriteEdge(req, { action: "bulk-price", ...body });
   }
+  if (req.method === "PUT" && code === "bulk-organize") {
+    return await callWriteEdge(req, { action: "bulk-organize", ...body });
+  }
   if (req.method === "POST") return await callWriteEdge(req, { action: "create", product: body });
   if (req.method === "PUT") return await callWriteEdge(req, { action: "update", oldCode: code, product: body });
   return json({ error: "Método não permitido." }, 405);
