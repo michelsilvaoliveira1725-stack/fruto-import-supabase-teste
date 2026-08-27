@@ -5,6 +5,15 @@ const STORE = "fruto-import-settings";
 const KEY = "public";
 
 const DEFAULT_HOME = {
+  header: {
+    showBrandName: false,
+    brandName: "FRUTO IMPORT",
+    homeLabel: "Início",
+    sennelierLabel: "Sennelier",
+    schminckeLabel: "Schmincke",
+    quoteLabel: "Orçamento",
+    searchPlaceholder: "Pesquisar por produto, código ou categoria..."
+  },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
   title: "Duas referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
@@ -161,9 +170,23 @@ function normalizeQuote(raw, fallback = DEFAULT_QUOTE) {
   };
 }
 
+function normalizeHeader(raw, fallback = DEFAULT_HOME.header) {
+  const source = raw && typeof raw === "object" ? raw : {};
+  return {
+    showBrandName: boolOr(source, "showBrandName", fallback.showBrandName),
+    brandName: valueOr(source, "brandName", fallback.brandName, 40),
+    homeLabel: valueOr(source, "homeLabel", fallback.homeLabel, 30),
+    sennelierLabel: valueOr(source, "sennelierLabel", fallback.sennelierLabel, 30),
+    schminckeLabel: valueOr(source, "schminckeLabel", fallback.schminckeLabel, 30),
+    quoteLabel: valueOr(source, "quoteLabel", fallback.quoteLabel, 30),
+    searchPlaceholder: valueOr(source, "searchPlaceholder", fallback.searchPlaceholder, 100)
+  };
+}
+
 function normalizeHome(raw, fallback = DEFAULTS.home) {
   const source = raw && typeof raw === "object" ? raw : {};
   return {
+    header: normalizeHeader(source.header, fallback.header || DEFAULT_HOME.header),
     eyebrow: valueOr(source, "eyebrow", fallback.eyebrow, 100),
     title: valueOr(source, "title", fallback.title, 180),
     intro: valueOr(source, "intro", fallback.intro, 360),
