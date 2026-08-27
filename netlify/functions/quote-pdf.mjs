@@ -66,7 +66,8 @@ function money(value) {
 }
 
 function salePack(product) {
-  return Number(product?.salePack) === 3 ? 3 : 1;
+  const pack = Number(product?.salePack);
+  return pack === 5 ? 5 : pack === 3 ? 3 : 1;
 }
 
 function stockControlEnabled(product) { return product?.stockControl === true; }
@@ -78,7 +79,7 @@ function maxAllowedQty(product) {
   if (!stockControlEnabled(product)) return 9999;
   const pack = salePack(product);
   const max = Math.min(9999, stockQuantity(product));
-  return pack === 3 ? Math.floor(max / 3) * 3 : max;
+  return pack === 1 ? max : Math.floor(max / pack) * pack;
 }
 function productAvailable(product) {
   return product?.available !== false && (!stockControlEnabled(product) || maxAllowedQty(product) >= salePack(product));
@@ -86,7 +87,7 @@ function productAvailable(product) {
 function normalizeQty(value, product) {
   const pack = salePack(product);
   const raw = Math.max(1, Math.min(9999, Number.parseInt(value, 10) || pack));
-  let qty = pack === 3 ? Math.max(3, Math.min(9999, Math.ceil(raw / 3) * 3)) : raw;
+  let qty = pack === 1 ? raw : Math.max(pack, Math.min(9999, Math.ceil(raw / pack) * pack));
   if (stockControlEnabled(product)) qty = Math.min(qty, maxAllowedQty(product));
   return qty;
 }
@@ -97,7 +98,7 @@ function quoteSettings(raw) {
   return { ...DEFAULT_QUOTE, ...q, columns: { ...DEFAULT_QUOTE.columns, ...(q.columns || {}) } };
 }
 function seriesLabel(value) { const v=String(value||"").trim().replace(/^s[eé]rie\s*/i,""); return v ? `Serie ${v}` : "-"; }
-function salePackLabel(product) { return salePack(product) === 3 ? "Fechado com 3" : "Unitario"; }
+function salePackLabel(product) { const pack = salePack(product); return pack === 1 ? "Unitario" : `Fechado com ${pack}`; }
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "Método não permitido." }, 405);
