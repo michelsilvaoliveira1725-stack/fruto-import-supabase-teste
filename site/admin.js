@@ -171,11 +171,13 @@ function variationValue(value) {
 }
 
 function salePackValue(value) {
-  return Number(value) === 3 ? 3 : 1;
+  const pack = Number(value);
+  return pack === 5 ? 5 : pack === 3 ? 3 : 1;
 }
 
 function salePackLabel(product) {
-  return salePackValue(product?.salePack) === 3 ? "Fechado com 3" : "Unitário";
+  const pack = salePackValue(product?.salePack);
+  return pack === 1 ? "Unitário" : `Fechado com ${pack}`;
 }
 
 async function api(url, opts = {}) {

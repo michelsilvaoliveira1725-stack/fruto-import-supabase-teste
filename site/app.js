@@ -80,7 +80,8 @@ function clampQty(value) {
 }
 
 function salePack(product) {
-  return Number(product?.salePack) === 3 ? 3 : 1;
+  const pack = Number(product?.salePack);
+  return pack === 5 ? 5 : pack === 3 ? 3 : 1;
 }
 
 function stockControlEnabled(product) {
@@ -96,7 +97,7 @@ function maxAllowedQty(product) {
   if (!stockControlEnabled(product)) return 9999;
   const stock = Math.min(9999, stockQuantity(product));
   const pack = salePack(product);
-  return pack === 3 ? Math.floor(stock / 3) * 3 : stock;
+  return pack === 1 ? stock : Math.floor(stock / pack) * pack;
 }
 
 function normalizeQtyForProduct(value, product) {
@@ -112,7 +113,8 @@ function normalizeQtyForProduct(value, product) {
 }
 
 function salePackLabel(product) {
-  return salePack(product) === 3 ? "Fechado com 3" : "Unitário";
+  const pack = salePack(product);
+  return pack === 1 ? "Unitário" : `Fechado com ${pack}`;
 }
 
 function isAvailable(product) {
@@ -613,7 +615,7 @@ function createQtyPicker(initialQty, product) {
   wrap.className = "product-qty-picker";
 
   const label = document.createElement("span");
-  label.textContent = pack === 3 ? "Qtd. (3 em 3)" : "Qtd.";
+  label.textContent = pack === 1 ? "Qtd." : `Qtd. (${pack} em ${pack})`;
 
   const minus = document.createElement("button");
   minus.type = "button";
@@ -627,7 +629,7 @@ function createQtyPicker(initialQty, product) {
   input.step = String(pack);
   input.inputMode = "numeric";
   input.value = normalizeQtyForProduct(initialQty || pack, product);
-  input.setAttribute("aria-label", pack === 3 ? "Quantidade desejada, múltiplos de 3" : "Quantidade desejada");
+  input.setAttribute("aria-label", pack === 1 ? "Quantidade desejada" : `Quantidade desejada, múltiplos de ${pack}`);
 
   const plus = document.createElement("button");
   plus.type = "button";
@@ -650,7 +652,7 @@ function createQtyPicker(initialQty, product) {
     const requested = Number.parseInt(input.value, 10) || pack;
     const normalized = normalizeQtyForProduct(requested, product);
     if (stockControlEnabled(product) && requested > maxAllowedQty(product)) toast("Quantidade solicitada maior que a disponível.");
-    else if (String(normalized) !== String(input.value)) toast(pack === 3 ? "Este produto é vendido fechado com 3 unidades." : "Quantidade ajustada.");
+    else if (String(normalized) !== String(input.value)) toast(pack === 1 ? "Quantidade ajustada." : `Este produto é vendido fechado com ${pack} unidades.`);
     input.value = normalized || pack;
   });
 
@@ -850,7 +852,7 @@ function render() {
     const categoryParts = [p.cat];
     if (variationValue(p.variation)) categoryParts.push(variationValue(p.variation));
     if (p.series) categoryParts.push(seriesLabel(p.series));
-    if (salePack(p) === 3) categoryParts.push("Fechado com 3");
+    if (salePack(p) > 1) categoryParts.push(salePackLabel(p));
     cat.textContent = categoryParts.join(" · ");
     const price = priceBlock(p);
     if (!isAvailable(p)) {
@@ -979,10 +981,10 @@ function renderItems() {
       s.textContent = seriesLabel(p.series);
       brandRow.appendChild(s);
     }
-    if (salePack(p) === 3) {
+    if (salePack(p) > 1) {
       const pack = document.createElement("span");
       pack.className = "quote-meta-chip";
-      pack.textContent = "Fechado com 3";
+      pack.textContent = salePackLabel(p);
       brandRow.appendChild(pack);
     }
     body.appendChild(brandRow);

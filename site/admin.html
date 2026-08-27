@@ -265,33 +265,62 @@
         </div>
       <form id="productForm">
         <input type="hidden" id="originalCode">
-        <div class="form-grid">
-          <div class="field"><label>Código / SKU *</label><input id="code" required maxlength="60" placeholder="Ex.: SEN-0001"></div>
-          <div class="field"><label>Nome do produto *</label><input id="name" required maxlength="180" placeholder="Nome completo do produto"></div>
-          <div class="field full"><label>Descrição resumida <span class="muted">(opcional)</span></label><textarea id="shortDescription" maxlength="500" rows="3" placeholder="Ex.: Aquarela extrafina com alta concentração de pigmentos, excelente transparência e luminosidade."></textarea><span class="muted small">Aparece somente quando o cliente abrir os detalhes do produto.</span></div>
-          <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
-          <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Pastel Oleoso, Bastão Óleo, Aquarela"></div>
-          <div class="field"><label>Variação / tamanho <span class="muted">(opcional)</span></label><input id="variation" maxlength="80" placeholder="Ex.: 5 ml, 36 ml, 38 ml, 96 ml"><span class="muted small">Produtos da mesma categoria podem ser separados por tamanho ou apresentação sem criar novas categorias.</span></div>
-          <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro da categoria e da variação selecionada.</span></div>
-          <div class="field"><label>Forma de venda *</label><select id="salePack" required><option value="1">Unitário (1 unidade)</option><option value="3">Fechado com 3 unidades</option></select><span class="muted small">Escolha por produto. Fechado com 3 inicia em 3 e aceita somente múltiplos de 3 no orçamento.</span></div>
-          <div class="field"><label>Disponibilidade *</label><select id="available" required><option value="true">Disponível</option><option value="false">Esgotado</option></select><span class="muted small">Esgotado continua visível no catálogo, mas não pode ser adicionado ao orçamento.</span></div>
-          <div class="field full stock-control-field"><label class="switch-line"><input id="stockControl" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Controlar quantidade disponível</span></label><span class="muted small">Opcional. O cliente não vê a quantidade em estoque, mas o sistema impede solicitar acima do limite.</span></div>
-          <div class="field hidden" id="stockQuantityField"><label>Quantidade disponível</label><input id="stockQuantity" type="number" min="0" max="999999" step="1" inputmode="numeric" placeholder="Ex.: 5"><span class="muted small">A quantidade aparece somente no Admin. Se não houver quantidade suficiente para a forma de venda, o produto fica esgotado automaticamente.</span></div>
-          <div class="field"><label>Preço do produto (R$)</label><input id="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 89.90"><span class="muted small">Se deixar vazio, o produto ficará sem preço definido no catálogo.</span></div>
-          <div class="field"><label>Desconto (%)</label><input id="discountPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Ex.: 10"></div>
-          <div class="field full discount-control">
-            <label class="switch-line"><input id="discountActive" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Ativar desconto no catálogo</span></label>
-            <span class="muted small">Ativado: mostra o preço original, o percentual de desconto e o preço final. Desativado: mostra somente o preço normal.</span>
-          </div>
-          <div class="field full product-images-field">
-            <label>Fotos do produto (JPG, PNG ou WebP) · adicionar sem substituir</label>
-            <input id="imageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
-            <div class="admin-product-images" id="productImagesPreview"></div>
-            <div class="product-images-actions"><button type="button" class="secondary small-button hidden" id="clearNewImages">Limpar novas fotos</button></div>
-            <span class="muted small">Você pode usar até 10 fotos por produto. As fotos existentes são mantidas. Clique em “Tornar principal” na foto que deseja usar como capa e em × para remover uma foto.</span>
-          </div>
+        <div class="product-form-sections">
+          <section class="product-form-group">
+            <div class="product-form-group-head"><span>01</span><div><h3>Identificação</h3><p>Informações principais do produto.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label>Código / SKU *</label><input id="code" required maxlength="60" placeholder="Ex.: SEN-0001"></div>
+              <div class="field"><label>Nome do produto *</label><input id="name" required maxlength="180" placeholder="Nome completo do produto"></div>
+              <div class="field full"><label>Descrição resumida <span class="muted">(opcional)</span></label><textarea id="shortDescription" maxlength="500" rows="3" placeholder="Ex.: Aquarela extrafina com alta concentração de pigmentos, excelente transparência e luminosidade."></textarea><span class="muted small">Aparece somente quando o cliente abrir os detalhes do produto.</span></div>
+            </div>
+          </section>
+
+          <section class="product-form-group">
+            <div class="product-form-group-head"><span>02</span><div><h3>Classificação</h3><p>Organize marca, categoria, tamanho e série.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+              <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Pastel Oleoso, Bastão Óleo, Aquarela"></div>
+              <div class="field"><label>Variação / tamanho <span class="muted">(opcional)</span></label><input id="variation" maxlength="80" placeholder="Ex.: 5 ml, 36 ml, 38 ml, 96 ml"><span class="muted small">Produtos da mesma categoria podem ser separados por tamanho ou apresentação sem criar novas categorias.</span></div>
+              <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro da categoria e da variação selecionada.</span></div>
+            </div>
+          </section>
+
+          <section class="product-form-group">
+            <div class="product-form-group-head"><span>03</span><div><h3>Venda e estoque</h3><p>Defina a forma de venda e a disponibilidade.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label>Forma de venda *</label><select id="salePack" required><option value="1">Unitário (1 unidade)</option><option value="3">Fechado com 3 unidades</option><option value="5">Fechado com 5 unidades</option></select><span class="muted small">Unitário aceita qualquer quantidade. Fechado com 3 ou 5 começa no pacote escolhido e aceita somente múltiplos dele no orçamento.</span></div>
+              <div class="field"><label>Disponibilidade *</label><select id="available" required><option value="true">Disponível</option><option value="false">Esgotado</option></select><span class="muted small">Esgotado continua visível no catálogo, mas não pode ser adicionado ao orçamento.</span></div>
+              <div class="field full stock-control-field"><label class="switch-line"><input id="stockControl" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Controlar quantidade disponível</span></label><span class="muted small">Opcional. O cliente não vê a quantidade em estoque, mas o sistema impede solicitar acima do limite.</span></div>
+              <div class="field hidden" id="stockQuantityField"><label>Quantidade disponível</label><input id="stockQuantity" type="number" min="0" max="999999" step="1" inputmode="numeric" placeholder="Ex.: 5"><span class="muted small">A quantidade aparece somente no Admin. Se não houver quantidade suficiente para a forma de venda, o produto fica esgotado automaticamente.</span></div>
+            </div>
+          </section>
+
+          <section class="product-form-group">
+            <div class="product-form-group-head"><span>04</span><div><h3>Preço e promoção</h3><p>Informe o valor e ative desconto quando necessário.</p></div></div>
+            <div class="form-grid">
+              <div class="field"><label>Preço do produto (R$)</label><input id="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 89.90"><span class="muted small">Se deixar vazio, o produto ficará sem preço definido no catálogo.</span></div>
+              <div class="field"><label>Desconto (%)</label><input id="discountPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Ex.: 10"></div>
+              <div class="field full discount-control">
+                <label class="switch-line"><input id="discountActive" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Ativar desconto no catálogo</span></label>
+                <span class="muted small">Ativado: mostra o preço original, o percentual de desconto e o preço final. Desativado: mostra somente o preço normal.</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="product-form-group product-form-group-images">
+            <div class="product-form-group-head"><span>05</span><div><h3>Fotos</h3><p>Adicione, remova e escolha a foto principal.</p></div></div>
+            <div class="form-grid">
+              <div class="field full product-images-field">
+                <label>Fotos do produto (JPG, PNG ou WebP) · adicionar sem substituir</label>
+                <input id="imageFiles" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+                <div class="admin-product-images" id="productImagesPreview"></div>
+                <div class="product-images-actions"><button type="button" class="secondary small-button hidden" id="clearNewImages">Limpar novas fotos</button></div>
+                <span class="muted small">Você pode usar até 10 fotos por produto. As fotos existentes são mantidas. Clique em “Tornar principal” na foto que deseja usar como capa e em × para remover uma foto.</span>
+              </div>
+            </div>
+          </section>
         </div>
-        <div class="actions"><button class="primary" type="submit" id="saveBtn">Salvar produto</button><button class="primary hidden" type="button" id="saveDuplicateNext">Salvar e duplicar próximo</button><button class="secondary hidden" type="button" id="endDuplicateSession">Encerrar duplicação</button><button class="secondary hidden" type="button" id="cancelEdit">Cancelar edição</button></div>
+        <div class="actions product-form-actions"><button class="primary" type="submit" id="saveBtn">Salvar produto</button><button class="primary hidden" type="button" id="saveDuplicateNext">Salvar e duplicar próximo</button><button class="secondary hidden" type="button" id="endDuplicateSession">Encerrar duplicação</button><button class="secondary hidden" type="button" id="cancelEdit">Cancelar edição</button></div>
       </form>
     </section>
 

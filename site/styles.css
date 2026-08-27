@@ -203,3 +203,17 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 
 /* V16.5 — variação/tamanho e organização por categoria */
 .admin-variation-group{margin:10px 0 16px;border:1px solid #dbe4f2;border-radius:12px;overflow:hidden;background:#fbfdff}.admin-variation-group-head{padding:10px 12px;background:#eef4ff;color:var(--navy);font-size:12px;font-weight:900;border-bottom:1px solid #dbe4f2}.admin-variation-group .admin-series-group{margin:10px}.organize-filters{align-items:end}
+
+
+/* V16.6 — cadastro organizado em etapas */
+.product-form-sections{display:grid;gap:16px;margin-top:14px}
+.product-form-group{border:1px solid #e2e8f0;border-radius:16px;padding:18px;background:#fbfcfe}
+.product-form-group:nth-child(even){background:#fff}
+.product-form-group-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #e7ebf1}
+.product-form-group-head>span{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#eaf1ff;color:var(--blue);font-size:11px;font-weight:900;flex:0 0 auto}
+.product-form-group-head h3{margin:0;color:var(--navy);font-size:16px}
+.product-form-group-head p{margin:3px 0 0;color:var(--muted);font-size:11px}
+.product-form-group .form-grid{align-items:start}
+.product-form-group-images{background:#fff}
+.product-form-actions{position:sticky;bottom:10px;z-index:8;margin:18px -4px 0;padding:12px;border:1px solid #dfe6ef;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 10px 28px rgba(15,23,42,.09);backdrop-filter:blur(8px)}
+@media(max-width:760px){.product-form-group{padding:14px}.product-form-group-head{align-items:flex-start}.product-form-actions{position:static;margin:16px 0 0}.product-form-actions button{width:100%}}
