@@ -29,19 +29,21 @@
   <div class="topbar">
     <button class="brand-logo" id="homeLogo" aria-label="Voltar ao início">
       <span class="brand-mark">F</span>
-      <span class="brand-name">FRUTO <b>IMPORT</b></span>
+      <span class="brand-name hidden" id="headerBrandName">FRUTO <b>IMPORT</b></span>
     </button>
+    <nav class="header-brand-nav" aria-label="Navegação por marca">
+      <button data-view="home" class="nav-brand active" id="navHomeLabel">Início</button>
+      <button data-brand="Sennelier" class="nav-brand" id="navSennelierLabel">Sennelier</button>
+      <button data-brand="Schmincke" class="nav-brand" id="navSchminckeLabel">Schmincke</button>
+    </nav>
     <div class="header-search hidden" id="headerSearch">
       <input id="search" placeholder="Pesquisar por produto, código ou categoria..." aria-label="Pesquisar produtos">
       <button id="searchBtn" aria-label="Pesquisar">⌕</button>
     </div>
-    <button class="quote-button" id="listBtn">Orçamento <span class="count" id="count">0</span></button>
+    <button class="quote-button" id="listBtn"><span id="quoteButtonLabel">Orçamento</span> <span class="count" id="count">0</span></button>
   </div>
-  <nav class="main-nav" aria-label="Navegação principal">
+  <nav class="main-nav" aria-label="Categorias do catálogo">
     <div class="nav-inner">
-      <button data-view="home" class="nav-brand active">Início</button>
-      <button data-brand="Sennelier" class="nav-brand">Sennelier</button>
-      <button data-brand="Schmincke" class="nav-brand">Schmincke</button>
       <div class="category-nav" id="cats" aria-label="Categorias"></div>
     </div>
   </nav>

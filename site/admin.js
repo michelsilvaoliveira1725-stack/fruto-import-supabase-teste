@@ -1,6 +1,15 @@
 const $ = id => document.getElementById(id);
 const PAGE_SIZE = 100;
 const DEFAULT_HOME = {
+  header: {
+    showBrandName: false,
+    brandName: "FRUTO IMPORT",
+    homeLabel: "Início",
+    sennelierLabel: "Sennelier",
+    schminckeLabel: "Schmincke",
+    quoteLabel: "Orçamento",
+    searchPlaceholder: "Pesquisar por produto, código ou categoria..."
+  },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
   title: "Duas referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
@@ -204,6 +213,7 @@ function normalizedHome(raw) {
   return {
     ...DEFAULT_HOME,
     ...home,
+    header: { ...DEFAULT_HOME.header, ...(home.header || {}) },
     benefits: DEFAULT_HOME.benefits.map((fallback, i) => ({ ...fallback, ...(Array.isArray(home.benefits) ? home.benefits[i] : {}) })),
     sennelier: { ...DEFAULT_HOME.sennelier, ...(home.sennelier || {}) },
     schmincke: { ...DEFAULT_HOME.schmincke, ...(home.schmincke || {}) },
@@ -464,6 +474,13 @@ function fillHomeForm(home) {
   $("homeEyebrow").value = h.eyebrow;
   $("homeTitle").value = h.title;
   $("homeIntro").value = h.intro;
+  $("headerShowBrandNameAdmin").checked = Boolean(h.header.showBrandName);
+  $("headerBrandNameAdmin").value = h.header.brandName;
+  $("headerHomeLabelAdmin").value = h.header.homeLabel;
+  $("headerSennelierLabelAdmin").value = h.header.sennelierLabel;
+  $("headerSchminckeLabelAdmin").value = h.header.schminckeLabel;
+  $("headerQuoteLabelAdmin").value = h.header.quoteLabel;
+  $("headerSearchPlaceholderAdmin").value = h.header.searchPlaceholder;
 
   $("currentSennelierHero").value = h.sennelier.image;
   $("sennelierHeroPreview").src = h.sennelier.image;
@@ -1127,6 +1144,15 @@ async function deleteProduct(code) {
 
 function homePayload(sennelierImage, schminckeImage, sennelierCatalogImage, schminckeCatalogImage) {
   return {
+    header: {
+      showBrandName: $("headerShowBrandNameAdmin").checked,
+      brandName: $("headerBrandNameAdmin").value,
+      homeLabel: $("headerHomeLabelAdmin").value,
+      sennelierLabel: $("headerSennelierLabelAdmin").value,
+      schminckeLabel: $("headerSchminckeLabelAdmin").value,
+      quoteLabel: $("headerQuoteLabelAdmin").value,
+      searchPlaceholder: $("headerSearchPlaceholderAdmin").value
+    },
     eyebrow: $("homeEyebrow").value,
     title: $("homeTitle").value,
     intro: $("homeIntro").value,

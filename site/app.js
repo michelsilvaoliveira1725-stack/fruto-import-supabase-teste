@@ -1,6 +1,15 @@
 const BRANDS = ["Sennelier", "Schmincke"];
 const PAGE_SIZE = 48;
 const DEFAULT_HOME = {
+  header: {
+    showBrandName: false,
+    brandName: "FRUTO IMPORT",
+    homeLabel: "Início",
+    sennelierLabel: "Sennelier",
+    schminckeLabel: "Schmincke",
+    quoteLabel: "Orçamento",
+    searchPlaceholder: "Pesquisar por produto, código ou categoria..."
+  },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
   title: "Duas referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
@@ -281,6 +290,7 @@ function homeSettings() {
   return {
     ...DEFAULT_HOME,
     ...home,
+    header: { ...DEFAULT_HOME.header, ...(home.header || {}) },
     benefits: DEFAULT_HOME.benefits.map((fallback, i) => ({ ...fallback, ...(Array.isArray(home.benefits) ? home.benefits[i] : {}) })),
     sennelier: { ...DEFAULT_HOME.sennelier, ...(home.sennelier || {}) },
     schmincke: { ...DEFAULT_HOME.schmincke, ...(home.schmincke || {}) },
@@ -294,6 +304,15 @@ function quoteSettings() {
 
 function applySettings() {
   const h = homeSettings();
+  const header = h.header || DEFAULT_HOME.header;
+  const brandName = $("headerBrandName");
+  brandName.textContent = header.brandName || DEFAULT_HOME.header.brandName;
+  brandName.classList.toggle("hidden", !header.showBrandName);
+  $("navHomeLabel").textContent = header.homeLabel || DEFAULT_HOME.header.homeLabel;
+  $("navSennelierLabel").textContent = header.sennelierLabel || DEFAULT_HOME.header.sennelierLabel;
+  $("navSchminckeLabel").textContent = header.schminckeLabel || DEFAULT_HOME.header.schminckeLabel;
+  $("quoteButtonLabel").textContent = header.quoteLabel || DEFAULT_HOME.header.quoteLabel;
+  $("search").placeholder = header.searchPlaceholder || DEFAULT_HOME.header.searchPlaceholder;
   $("landingEyebrow").textContent = h.eyebrow;
   $("landingTitle").textContent = h.title;
   $("landingIntro").textContent = h.intro;
