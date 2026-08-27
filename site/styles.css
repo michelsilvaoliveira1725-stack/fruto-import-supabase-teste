@@ -220,3 +220,68 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 
 /* V16.7 · diagnóstico de fotos */
 .photo-audit-status{align-self:center}.photo-audit-status.photo-audit-warning{color:#a33a2c;font-weight:800}.admin-photo-broken{display:inline-flex;margin-top:5px;padding:3px 6px;border-radius:999px;background:#fff0ee;color:#a3261d;border:1px solid #efc1bd;font-size:9px;font-weight:900;white-space:nowrap}.admin-table tr:has(.admin-photo-broken){background:#fffafa}
+
+/* V16.8 — cabeçalho mais compacto + categorias com mais espaço */
+@media(min-width:1050px){
+  .site-header .topbar{
+    max-width:1320px;
+    padding-left:16px;
+    padding-right:16px;
+    gap:16px;
+    position:relative;
+  }
+  .site-header .brand-logo{flex:0 0 auto}
+  .site-header .header-search{
+    margin-left:250px;
+    max-width:none;
+    min-width:320px;
+  }
+  .site-header .main-nav{position:relative;overflow:visible}
+  .site-header .nav-inner{
+    max-width:1320px;
+    padding-left:16px;
+    padding-right:16px;
+    position:relative;
+    overflow:visible;
+  }
+  .site-header .main-nav .nav-brand{
+    position:absolute;
+    top:-54px;
+    z-index:4;
+    height:40px;
+    padding:0 12px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--navy);
+    background:#f6f8fb;
+    border:1px solid #dce2eb;
+    border-radius:10px;
+    font-size:13px;
+    font-weight:800;
+    box-shadow:0 3px 10px rgba(15,23,42,.04);
+  }
+  .site-header .main-nav .nav-brand:hover{
+    color:var(--blue);
+    background:#eef3ff;
+    border-color:#c8d5f3;
+  }
+  .site-header .main-nav .nav-brand.active{
+    color:#fff;
+    background:var(--navy);
+    border-color:var(--navy);
+  }
+  .site-header .nav-inner>.nav-brand:nth-child(1){left:228px}
+  .site-header .nav-inner>.nav-brand:nth-child(2){left:292px}
+  .site-header .nav-inner>.nav-brand:nth-child(3){left:383px}
+  .site-header .category-nav{
+    flex:1;
+    padding-left:0;
+    margin-left:0;
+    border-left:0;
+    min-width:0;
+  }
+  /* Na tela inicial, onde não há categorias, evita deixar uma faixa azul vazia. */
+  .site-header .main-nav:has(.category-nav:empty){height:0;background:transparent}
+  .site-header .main-nav:has(.category-nav:empty) .nav-inner{height:0;min-height:0;padding-top:0;padding-bottom:0}
+}
