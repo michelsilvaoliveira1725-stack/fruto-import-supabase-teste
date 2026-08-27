@@ -59,6 +59,9 @@ let page = 1;
 let activeAdminBrand = "all";
 let activeAvailability = "all";
 let activeQualityFilter = "all";
+let brokenImageUrls = new Set();
+let photoAuditDone = false;
+let photoAuditRunning = false;
 let activeAdminSection = localStorage.getItem("fruto_import_admin_section") || "productsSection";
 let editingImages = [];
 let pendingImageFiles = [];
@@ -356,6 +359,7 @@ async function loadProducts() {
   renderRows();
   refreshBulkFilters();
   refreshOrganizeFilters();
+  updatePhotoAuditUi();
 }
 
 async function loadSettings() {
@@ -542,6 +546,67 @@ async function saveSettings() {
   }
 }
 
+function isManagedProductImage(url) {
+  const raw = String(url || "").trim();
+  return /^https:\/\/scwrzdwxnkjqkiawvdve\.supabase\.co\/storage\/v1\/object\/public\/product-images\/uploads\//i.test(raw);
+}
+
+function productHasBrokenPhoto(product) {
+  return productImages(product).some(url => brokenImageUrls.has(url));
+}
+
+function brokenPhotoProductCount() {
+  return products.filter(productHasBrokenPhoto).length;
+}
+
+function updatePhotoAuditUi() {
+  const status = $("photoAuditStatus");
+  const button = $("auditProductPhotosBtn");
+  if (button) button.textContent = photoAuditDone ? "Verificar fotos novamente" : "Verificar fotos";
+  if (!status) return;
+  if (photoAuditRunning) status.textContent = "Verificando fotos no servidor...";
+  else if (!photoAuditDone) status.textContent = "Fotos ainda não verificadas.";
+  else {
+    const count = brokenPhotoProductCount();
+    status.textContent = count ? `${count} produto(s) com foto quebrada.` : "Nenhuma foto quebrada encontrada.";
+    status.classList.toggle("photo-audit-warning", count > 0);
+  }
+}
+
+async function auditProductPhotos({ activateFilter = true } = {}) {
+  if (photoAuditRunning) return;
+  const urls = [...new Set(products.flatMap(productImages).filter(isManagedProductImage))];
+  photoAuditRunning = true;
+  updatePhotoAuditUi();
+  const button = $("auditProductPhotosBtn");
+  if (button) button.disabled = true;
+  try {
+    const broken = new Set();
+    const BATCH = 120;
+    for (let i = 0; i < urls.length; i += BATCH) {
+      const d = await api("/api/image-health", { method: "POST", json: { urls: urls.slice(i, i + BATCH) } });
+      (Array.isArray(d.broken) ? d.broken : []).forEach(url => broken.add(url));
+    }
+    brokenImageUrls = broken;
+    photoAuditDone = true;
+    if (activateFilter) {
+      activeQualityFilter = "brokenphoto";
+      if ($("adminQualityFilter")) $("adminQualityFilter").value = "brokenphoto";
+    }
+    renderRows();
+    const count = brokenPhotoProductCount();
+    notice("mainNotice", count
+      ? `Verificação concluída: ${count} produto(s) com foto quebrada. Use o filtro “Fotos quebradas” para corrigir somente esses itens.`
+      : "Verificação concluída: nenhuma foto quebrada foi encontrada.", count ? "error" : "success");
+  } catch (e) {
+    notice("mainNotice", `Não foi possível verificar as fotos: ${e.message}`, "error");
+  } finally {
+    photoAuditRunning = false;
+    if (button) button.disabled = false;
+    updatePhotoAuditUi();
+  }
+}
+
 function stockControlEnabled(product) {
   return product?.stockControl === true;
 }
@@ -571,6 +636,7 @@ function currentFiltered() {
       || (activeQualityFilter === "lowstock" && stockControlEnabled(p) && isAvailable(p) && stockQuantityValue(p.stockQuantity) <= 3)
       || (activeQualityFilter === "noprice" && numericPrice(p.price) === null)
       || (activeQualityFilter === "nophoto" && productImages(p).length === 0)
+      || (activeQualityFilter === "brokenphoto" && photoAuditDone && productHasBrokenPhoto(p))
       || (activeQualityFilter === "stockcontrol" && stockControlEnabled(p));
     return brandOk && availabilityOk && searchOk && qualityOk;
   });
@@ -592,6 +658,7 @@ function createAdminProductTable(list) {
     if (images[0]) {
       const img = document.createElement("img"); img.className = "thumb"; attachAdminReliableImage(img, images[0], { alt: p.name, lazy: true }); tdImg.appendChild(img);
       if (images.length > 1) { const count = document.createElement("div"); count.className = "admin-photo-count"; count.textContent = `${images.length} fotos`; tdImg.appendChild(count); }
+      if (photoAuditDone && productHasBrokenPhoto(p)) { const warning = document.createElement("div"); warning.className = "admin-photo-broken"; warning.textContent = "Foto quebrada"; tdImg.appendChild(warning); }
     } else tdImg.textContent = "—";
 
     const tdName = document.createElement("td");
@@ -1388,7 +1455,16 @@ $("showResetBtn")?.addEventListener("click", () => $("resetFields").classList.to
 $("resetPasswordBtn")?.addEventListener("click", resetPassword);
 $("changePasswordBtn")?.addEventListener("click", changePassword);
 
-$("adminQualityFilter")?.addEventListener("change", () => { activeQualityFilter = $("adminQualityFilter").value || "all"; renderRows(); });
+$("adminQualityFilter")?.addEventListener("change", async () => {
+  const selected = $("adminQualityFilter").value || "all";
+  if (selected === "brokenphoto" && !photoAuditDone) {
+    await auditProductPhotos({ activateFilter: true });
+    return;
+  }
+  activeQualityFilter = selected;
+  renderRows();
+});
+$("auditProductPhotosBtn")?.addEventListener("click", () => auditProductPhotos({ activateFilter: true }));
 $("clearAdminFilters")?.addEventListener("click", () => { activeAdminBrand="all"; activeAvailability="all"; activeQualityFilter="all"; $("adminSearch").value=""; $("adminQualityFilter").value="all"; document.querySelectorAll(".product-brand-tab").forEach(b=>b.classList.toggle("active",b.dataset.productBrand==="all")); document.querySelectorAll(".availability-tab").forEach(b=>b.classList.toggle("active",b.dataset.availability==="all")); renderRows(); });
 document.querySelectorAll("[data-overview-filter]").forEach(b => b.addEventListener("click", () => openProductsWithFilter(b.dataset.overviewFilter)));
 $("overviewNewProduct")?.addEventListener("click", () => { setAdminSection("productsSection"); resetForm(); document.querySelector(".product-editor-panel")?.scrollIntoView({behavior:"smooth",block:"start"}); });

@@ -217,3 +217,6 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 .product-form-group-images{background:#fff}
 .product-form-actions{position:sticky;bottom:10px;z-index:8;margin:18px -4px 0;padding:12px;border:1px solid #dfe6ef;border-radius:14px;background:rgba(255,255,255,.96);box-shadow:0 10px 28px rgba(15,23,42,.09);backdrop-filter:blur(8px)}
 @media(max-width:760px){.product-form-group{padding:14px}.product-form-group-head{align-items:flex-start}.product-form-actions{position:static;margin:16px 0 0}.product-form-actions button{width:100%}}
+
+/* V16.7 · diagnóstico de fotos */
+.photo-audit-status{align-self:center}.photo-audit-status.photo-audit-warning{color:#a33a2c;font-weight:800}.admin-photo-broken{display:inline-flex;margin-top:5px;padding:3px 6px;border-radius:999px;background:#fff0ee;color:#a3261d;border:1px solid #efc1bd;font-size:9px;font-weight:900;white-space:nowrap}.admin-table tr:has(.admin-photo-broken){background:#fffafa}

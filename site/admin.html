@@ -381,9 +381,12 @@
             <option value="lowstock">Baixo estoque (até 3)</option>
             <option value="noprice">Sem preço</option>
             <option value="nophoto">Sem foto</option>
+            <option value="brokenphoto">Fotos quebradas</option>
             <option value="stockcontrol">Com controle de quantidade</option>
           </select>
         </label>
+        <button class="secondary small-button" type="button" id="auditProductPhotosBtn">Verificar fotos</button>
+        <span class="photo-audit-status muted small" id="photoAuditStatus">Fotos ainda não verificadas.</span>
         <button class="secondary small-button" type="button" id="clearAdminFilters">Limpar filtros</button>
       </div>
       <div id="productGroups" class="product-groups"></div>
