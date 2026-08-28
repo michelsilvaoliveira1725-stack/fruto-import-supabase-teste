@@ -77,6 +77,8 @@ let pendingImageFiles = [];
 let pendingPrimaryFile = null;
 let duplicateSessionActive = false;
 let saveContinueDuplicate = false;
+let adminCatalogVersion = "";
+let adminCatalogRefreshTimer = null;
 function productCodeKey(value) {
   return String(value ?? "")
     .normalize("NFKC")
@@ -365,11 +367,32 @@ async function changePassword() {
 async function loadProducts() {
   const d = await api("/api/products");
   products = Array.isArray(d.products) ? d.products : [];
+  try { const v = await api("/api/catalog-version"); adminCatalogVersion = String(v.version || adminCatalogVersion); } catch {}
   updateStats();
   renderRows();
   refreshBulkFilters();
   refreshOrganizeFilters();
   updatePhotoAuditUi();
+}
+
+
+async function refreshAdminCatalogIfChanged() {
+  if (!token || document.hidden) return;
+  try {
+    const v = await api("/api/catalog-version");
+    const next = String(v.version || "");
+    if (next && adminCatalogVersion && next !== adminCatalogVersion) {
+      await loadProducts();
+      notice("mainNotice", "Catálogo atualizado automaticamente.", "success");
+    } else if (next && !adminCatalogVersion) {
+      adminCatalogVersion = next;
+    }
+  } catch {}
+}
+
+function startAdminCatalogAutoRefresh() {
+  clearInterval(adminCatalogRefreshTimer);
+  adminCatalogRefreshTimer = setInterval(refreshAdminCatalogIfChanged, 6000);
 }
 
 async function loadSettings() {
@@ -1491,13 +1514,16 @@ $("adminQualityFilter")?.addEventListener("change", async () => {
   renderRows();
 });
 $("auditProductPhotosBtn")?.addEventListener("click", () => auditProductPhotos({ activateFilter: true }));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshAdminCatalogIfChanged(); });
+window.addEventListener("focus", refreshAdminCatalogIfChanged);
+
 $("clearAdminFilters")?.addEventListener("click", () => { activeAdminBrand="all"; activeAvailability="all"; activeQualityFilter="all"; $("adminSearch").value=""; $("adminQualityFilter").value="all"; document.querySelectorAll(".product-brand-tab").forEach(b=>b.classList.toggle("active",b.dataset.productBrand==="all")); document.querySelectorAll(".availability-tab").forEach(b=>b.classList.toggle("active",b.dataset.availability==="all")); renderRows(); });
 document.querySelectorAll("[data-overview-filter]").forEach(b => b.addEventListener("click", () => openProductsWithFilter(b.dataset.overviewFilter)));
 $("overviewNewProduct")?.addEventListener("click", () => { setAdminSection("productsSection"); resetForm(); document.querySelector(".product-editor-panel")?.scrollIntoView({behavior:"smooth",block:"start"}); });
 $("overviewBulkPrice")?.addEventListener("click", () => { setAdminSection("productsSection"); document.querySelector(".bulk-price-panel")?.scrollIntoView({behavior:"smooth",block:"start"}); });
 $("overviewExportBackup")?.addEventListener("click", exportAdminBackup);
 
-checkStatus();
+checkStatus().finally(startAdminCatalogAutoRefresh);
 
 $("saveSettingsBottom")?.addEventListener("click", saveSettings);
 $("sennelierCatalogHeroFile")?.addEventListener("change", () => previewFile("sennelierCatalogHeroFile", "sennelierCatalogHeroPreview"));

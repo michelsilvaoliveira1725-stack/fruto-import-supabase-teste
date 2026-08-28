@@ -75,6 +75,9 @@ let visibleLimit = PAGE_SIZE;
 let selected = {};
 let toastTimer;
 let detailProductCode = "";
+let catalogVersion = "";
+let catalogRefreshTimer = null;
+let quoteFinalizeId = "";
 
 try {
   selected = JSON.parse(localStorage.getItem("fruto_import_list") || "{}");
@@ -1109,11 +1112,87 @@ function clearList() {
 
 function resetQuoteAfterFinalize() {
   selected = {};
+  quoteFinalizeId = "";
   save();
   if ($("customerName")) $("customerName").value = "";
   if ($("customerNote")) $("customerNote").value = "";
   render();
   renderItems();
+}
+
+
+function createQuoteId() {
+  if (quoteFinalizeId) return quoteFinalizeId;
+  if (globalThis.crypto?.randomUUID) quoteFinalizeId = crypto.randomUUID();
+  else quoteFinalizeId = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+  return quoteFinalizeId;
+}
+
+async function finalizeQuoteStock() {
+  const payload = quotePayload();
+  if (!payload.items.length) throw new Error("Adicione pelo menos um produto ao orçamento.");
+  const r = await fetch("/api/quote-stock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      quoteId: createQuoteId(),
+      items: payload.items,
+      customer: payload.customer || ""
+    }),
+    cache: "no-store"
+  });
+  let data = {};
+  try { data = await r.json(); } catch {}
+  if (!r.ok) {
+    quoteFinalizeId = "";
+    throw new Error(data.error || "Não foi possível atualizar o estoque.");
+  }
+  await refreshCatalogNow({ force: true, silent: true });
+  return data;
+}
+
+async function fetchCatalogVersion() {
+  const r = await fetch("/api/catalog-version", { cache: "no-store" });
+  if (!r.ok) return "";
+  const d = await r.json();
+  return String(d.version || "");
+}
+
+async function refreshCatalogNow({ force = false, silent = false } = {}) {
+  try {
+    const version = await fetchCatalogVersion();
+    if (!force && version && catalogVersion && version === catalogVersion) return false;
+    const r = await fetch("/api/products", { cache: "no-store" });
+    if (!r.ok) return false;
+    const d = await r.json();
+    products = Array.isArray(d.products) ? d.products : [];
+    if (version) catalogVersion = version;
+    for (const code of Object.keys(selected)) {
+      const product = products.find(item => item.code === code);
+      if (!product || !isAvailable(product)) delete selected[code];
+      else {
+        const normalized = normalizeQtyForProduct(selected[code], product);
+        if (!normalized) delete selected[code]; else selected[code] = normalized;
+      }
+    }
+    save();
+    updateLandingCounts();
+    if (currentBrand) { categories(); render(); }
+    renderItems();
+    if (!silent) toast("Catálogo atualizado automaticamente.");
+    return true;
+  } catch { return false; }
+}
+
+function startCatalogAutoRefresh() {
+  clearInterval(catalogRefreshTimer);
+  catalogRefreshTimer = setInterval(() => {
+    if (!document.hidden) refreshCatalogNow({ silent: true });
+  }, 7000);
 }
 
 function quotePayload() {
@@ -1199,6 +1278,7 @@ async function sendPdf() {
           text: shortMessage,
           files: [file]
         });
+        await finalizeQuoteStock();
         resetQuoteAfterFinalize();
         toast("Solicitação finalizada. Um novo orçamento já pode ser iniciado.");
         return;
@@ -1213,7 +1293,8 @@ async function sendPdf() {
       }
     }
 
-    // Modo compatível: baixa o PDF e abre o WhatsApp apenas com mensagem curta.
+    // Modo compatível: confirma o estoque, baixa o PDF e abre o WhatsApp apenas com mensagem curta.
+    await finalizeQuoteStock();
     downloadBlob(blob, filename);
     const wa = whatsappUrl();
     if (wa) {
@@ -1239,6 +1320,7 @@ async function downloadPdf() {
   btn.textContent = "Gerando...";
   try {
     const blob = await generatePdfBlob();
+    await finalizeQuoteStock();
     downloadBlob(blob, `fruto-import-orcamento-${new Date().toISOString().slice(0,10)}.pdf`);
     resetQuoteAfterFinalize();
     toast("PDF gerado. O orçamento foi limpo para uma nova solicitação.");
@@ -1259,6 +1341,7 @@ async function load() {
     if (!catalogResponse.ok) throw new Error("Catálogo indisponível.");
     const catalogData = await catalogResponse.json();
     products = Array.isArray(catalogData.products) ? catalogData.products : [];
+    catalogVersion = await fetchCatalogVersion();
     for (const code of Object.keys(selected)) {
       const product = products.find(item => item.code === code);
       if (!product || !isAvailable(product)) delete selected[code];
@@ -1303,6 +1386,9 @@ $("videoModal").addEventListener("click", e => { if (e.target === $("videoModal"
 $("lightboxPrev").addEventListener("click", () => moveLightbox(-1));
 $("lightboxNext").addEventListener("click", () => moveLightbox(1));
 $("imageLightbox").addEventListener("click", e => { if (e.target === $("imageLightbox")) closeLightbox(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshCatalogNow({ silent: true }); });
+window.addEventListener("focus", () => refreshCatalogNow({ silent: true }));
+
 document.addEventListener("keydown", e => {
   if (!$("productDetailModal").classList.contains("hidden")) {
     if (e.key === "Escape") closeProductDetail();
@@ -1319,4 +1405,4 @@ document.addEventListener("keydown", e => {
 
 applySettings();
 updateCount();
-load();
+load().finally(startCatalogAutoRefresh);
