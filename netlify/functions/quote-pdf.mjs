@@ -17,7 +17,10 @@ async function publicCatalog() {
     cache: "no-store"
   });
   if (!r.ok) throw new Error(`Supabase ${r.status}: ${(await r.text()).slice(0,180)}`);
-  return await r.json();
+  const data = await r.json();
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.products)) return data.products;
+  throw new Error("Formato do catálogo inválido.");
 }
 
 function clean(value, max = 180) {
