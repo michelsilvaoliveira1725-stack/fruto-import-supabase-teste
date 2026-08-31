@@ -6,6 +6,9 @@ const KEY = "public";
 
 const DEFAULT_HOME = {
   header: {
+    showLogo: true,
+    logoImage: "",
+    brandLabelPosition: "left",
     showBrandName: false,
     brandName: "FRUTO IMPORT",
     homeLabel: "Início",
@@ -178,7 +181,12 @@ function normalizeQuote(raw, fallback = DEFAULT_QUOTE) {
 
 function normalizeHeader(raw, fallback = DEFAULT_HOME.header) {
   const source = raw && typeof raw === "object" ? raw : {};
+  const rawLabelPosition = valueOr(source, "brandLabelPosition", fallback.brandLabelPosition || "left", 12);
+  const brandLabelPosition = ["left", "center", "right", "hidden"].includes(rawLabelPosition) ? rawLabelPosition : "left";
   return {
+    showLogo: boolOr(source, "showLogo", fallback.showLogo !== false),
+    logoImage: valueOr(source, "logoImage", fallback.logoImage || "", 500),
+    brandLabelPosition,
     showBrandName: boolOr(source, "showBrandName", fallback.showBrandName),
     brandName: valueOr(source, "brandName", fallback.brandName, 40),
     homeLabel: valueOr(source, "homeLabel", fallback.homeLabel, 30),
