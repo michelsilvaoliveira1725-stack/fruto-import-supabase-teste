@@ -331,5 +331,5 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 
 /* V17.2 - Raphaël */
 @media (min-width:1000px){.brand-choices-v3{grid-template-columns:repeat(3,minmax(0,1fr));}}
-.raphael-card .brand-showcase-media img{object-fit:contain;background:#fff;padding:22px;}
+.raphael-card .brand-showcase-media img{object-fit:cover;background:#eef1f5;padding:0;}
 .catalog-hero.raphael{background-color:#171717;}
