@@ -2,6 +2,9 @@ const BRANDS = ["Sennelier", "Schmincke", "Raphaël"];
 const PAGE_SIZE = 48;
 const DEFAULT_HOME = {
   header: {
+    showLogo: true,
+    logoImage: "",
+    brandLabelPosition: "left",
     showBrandName: false,
     brandName: "FRUTO IMPORT",
     homeLabel: "Início",
@@ -318,8 +321,28 @@ function applySettings() {
   const h = homeSettings();
   const header = h.header || DEFAULT_HOME.header;
   const brandName = $("headerBrandName");
+  const logoButton = $("homeLogo");
+  const logoMark = $("headerLogoMark");
+  const logoImage = $("headerLogoImage");
+  const showLogo = header.showLogo !== false;
+  const customLogo = String(header.logoImage || "").trim();
   brandName.textContent = header.brandName || DEFAULT_HOME.header.brandName;
   brandName.classList.toggle("hidden", !header.showBrandName);
+  logoButton.classList.toggle("hidden", !showLogo && !header.showBrandName);
+  logoMark.classList.toggle("hidden", !showLogo || Boolean(customLogo));
+  logoImage.classList.add("hidden");
+  if (showLogo && customLogo) {
+    logoImage.classList.remove("hidden");
+    attachReliableImage(logoImage, [customLogo], {
+      alt: "Logo Fruto Import",
+      lazy: false,
+      onEmpty: () => { logoImage.classList.add("hidden"); logoMark.classList.remove("hidden"); }
+    });
+  } else {
+    logoImage.removeAttribute("src");
+  }
+  const labelPosition = ["left", "center", "right", "hidden"].includes(header.brandLabelPosition) ? header.brandLabelPosition : "left";
+  document.body.dataset.brandLabelPosition = labelPosition;
   $("navHomeLabel").textContent = header.homeLabel || DEFAULT_HOME.header.homeLabel;
   $("navSennelierLabel").textContent = header.sennelierLabel || DEFAULT_HOME.header.sennelierLabel;
   $("navSchminckeLabel").textContent = header.schminckeLabel || DEFAULT_HOME.header.schminckeLabel;
@@ -340,9 +363,14 @@ function applySettings() {
     $(`${prefix}Kicker`).textContent = b.kicker;
     $(`${prefix}Title`).textContent = b.title;
     $(`${prefix}Description`).textContent = b.description;
-    $(`${prefix}Chip1`).textContent = b.chip1;
-    $(`${prefix}Chip2`).textContent = b.chip2;
-    $(`${prefix}Chip3`).textContent = b.chip3;
+    const chipValues = [b.chip1, b.chip2, b.chip3].map(value => String(value || "").trim());
+    chipValues.forEach((value, i) => {
+      const chip = $(`${prefix}Chip${i + 1}`);
+      chip.textContent = value;
+      chip.classList.toggle("hidden", !value);
+    });
+    const chipBox = $(`${prefix}Chip1`).closest(".chips");
+    if (chipBox) chipBox.classList.toggle("hidden", !chipValues.some(Boolean));
     $(`${prefix}ButtonText`).textContent = b.button;
     const img = $(`${prefix}HeroImage`);
     if (img.src !== b.image) img.src = b.image;

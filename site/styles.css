@@ -333,3 +333,20 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 @media (min-width:1000px){.brand-choices-v3{grid-template-columns:repeat(3,minmax(0,1fr));}}
 .raphael-card .brand-showcase-media img{object-fit:cover;background:#eef1f5;padding:0;}
 .catalog-hero.raphael{background-color:#171717;}
+
+/* ===== Fruto Import V17.3: logo editável, etiqueta posicionável e chips limpos ===== */
+.header-logo-image{display:block;width:auto;height:39px;max-width:150px;object-fit:contain;border-radius:8px}
+body[data-brand-label-position="center"] .product-pic .brand-mini{left:50%;right:auto;transform:translateX(-50%)}
+body[data-brand-label-position="right"] .product-pic .brand-mini{left:auto;right:9px;transform:none}
+body[data-brand-label-position="left"] .product-pic .brand-mini{left:9px;right:auto;transform:none}
+body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
+.header-visual-admin{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.header-logo-admin-card,.header-label-admin-card{border:1px solid #e3e7ed;border-radius:12px;padding:14px;background:#fff}
+.header-logo-preview-box{min-height:72px;display:flex;align-items:center;justify-content:flex-start;gap:12px;margin:10px 0;padding:10px;border:1px dashed #d8dde5;border-radius:10px;background:#fafbfc}
+.header-logo-preview{display:block;max-width:220px;max-height:58px;object-fit:contain}
+.admin-logo-default{flex:0 0 auto}
+.compact-actions{margin-top:10px}
+.header-name-toggle{margin:4px 0 12px}
+.chips.hidden{display:none!important}
+@media(max-width:760px){.header-logo-image{height:35px;max-width:120px}.header-visual-admin{grid-template-columns:1fr}}
+

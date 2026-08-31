@@ -2,6 +2,9 @@ const $ = id => document.getElementById(id);
 const PAGE_SIZE = 100;
 const DEFAULT_HOME = {
   header: {
+    showLogo: true,
+    logoImage: "",
+    brandLabelPosition: "left",
     showBrandName: false,
     brandName: "FRUTO IMPORT",
     homeLabel: "Início",
@@ -501,11 +504,31 @@ function renderVideoSlotsAdmin(home) {
   });
 }
 
+function renderHeaderLogoPreview(url = "") {
+  const raw = String(url || "").trim();
+  const preview = $("headerLogoPreview");
+  const fallback = $("headerLogoDefaultPreview");
+  if (!preview || !fallback) return;
+  if (raw) {
+    preview.classList.remove("hidden");
+    fallback.classList.add("hidden");
+    attachAdminReliableImage(preview, raw, { alt: "Prévia da logo", lazy: false });
+  } else {
+    preview.removeAttribute("src");
+    preview.classList.add("hidden");
+    fallback.classList.remove("hidden");
+  }
+}
+
 function fillHomeForm(home) {
   const h = normalizedHome(home);
   $("homeEyebrow").value = h.eyebrow;
   $("homeTitle").value = h.title;
   $("homeIntro").value = h.intro;
+  $("headerShowLogoAdmin").checked = h.header.showLogo !== false;
+  $("currentHeaderLogo").value = h.header.logoImage || "";
+  $("brandLabelPositionAdmin").value = ["left", "center", "right", "hidden"].includes(h.header.brandLabelPosition) ? h.header.brandLabelPosition : "left";
+  renderHeaderLogoPreview(h.header.logoImage || "");
   $("headerShowBrandNameAdmin").checked = Boolean(h.header.showBrandName);
   $("headerBrandNameAdmin").value = h.header.brandName;
   $("headerHomeLabelAdmin").value = h.header.homeLabel;
@@ -1184,9 +1207,12 @@ async function deleteProduct(code) {
   }
 }
 
-function homePayload(sennelierImage, schminckeImage, raphaelImage, sennelierCatalogImage, schminckeCatalogImage, raphaelCatalogImage) {
+function homePayload(headerLogoImage, sennelierImage, schminckeImage, raphaelImage, sennelierCatalogImage, schminckeCatalogImage, raphaelCatalogImage) {
   return {
     header: {
+      showLogo: $("headerShowLogoAdmin").checked,
+      logoImage: headerLogoImage || "",
+      brandLabelPosition: $("brandLabelPositionAdmin").value || "left",
       showBrandName: $("headerShowBrandNameAdmin").checked,
       brandName: $("headerBrandNameAdmin").value,
       homeLabel: $("headerHomeLabelAdmin").value,
@@ -1260,6 +1286,9 @@ async function saveHomeSettings() {
   const buttons = [$("saveHomeSettings"), $("saveHomeSettingsBottom")];
   buttons.forEach(b => { b.disabled = true; });
 
+  const persistedLogo = normalizedHome(currentSettings.home).header.logoImage || "";
+  let headerLogoImage = $("currentHeaderLogo").value || "";
+  let newLogoUploaded = false;
   const persistedSen = normalizedHome(currentSettings.home).sennelier.image;
   const persistedSch = normalizedHome(currentSettings.home).schmincke.image;
   const persistedRap = normalizedHome(currentSettings.home).raphael.image;
@@ -1280,6 +1309,11 @@ async function saveHomeSettings() {
   let newRapCatalogUploaded = false;
 
   try {
+    const logoFile = $("headerLogoFile").files[0];
+    if (logoFile) {
+      headerLogoImage = await uploadImage(logoFile, false);
+      newLogoUploaded = true;
+    }
     const senFile = $("sennelierHeroFile").files[0];
     const schFile = $("schminckeHeroFile").files[0];
     const rapFile = $("raphaelHeroFile").files[0];
@@ -1305,9 +1339,10 @@ async function saveHomeSettings() {
         if (oldThumb && oldThumb !== newThumb) deleteUploadedImage(oldThumb).catch(() => {});
       }
     }
-    const d = await api("/api/settings", { method: "PUT", json: { home: homePayload(senImage, schImage, rapImage, senCatalogImage, schCatalogImage, rapCatalogImage) } });
+    const d = await api("/api/settings", { method: "PUT", json: { home: homePayload(headerLogoImage, senImage, schImage, rapImage, senCatalogImage, schCatalogImage, rapCatalogImage) } });
     currentSettings = { ...currentSettings, ...d, home: normalizedHome(d.home) };
 
+    if (persistedLogo && persistedLogo !== headerLogoImage) deleteUploadedImage(persistedLogo).catch(() => {});
     if (persistedSen && persistedSen !== senImage) deleteUploadedImage(persistedSen).catch(() => {});
     if (persistedSch && persistedSch !== schImage) deleteUploadedImage(persistedSch).catch(() => {});
     if (persistedRap && persistedRap !== rapImage) deleteUploadedImage(persistedRap).catch(() => {});
@@ -1315,6 +1350,7 @@ async function saveHomeSettings() {
     if (persistedSchCatalog && persistedSchCatalog !== schCatalogImage) deleteUploadedImage(persistedSchCatalog).catch(() => {});
     if (persistedRapCatalog && persistedRapCatalog !== rapCatalogImage) deleteUploadedImage(persistedRapCatalog).catch(() => {});
 
+    $("headerLogoFile").value = "";
     $("sennelierHeroFile").value = "";
     $("schminckeHeroFile").value = "";
     $("raphaelHeroFile").value = "";
@@ -1327,6 +1363,7 @@ async function saveHomeSettings() {
     notice("mainNotice", "Página inicial atualizada com sucesso. Vídeos e miniaturas salvos.", "success");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
+    if (newLogoUploaded && headerLogoImage !== persistedLogo) deleteUploadedImage(headerLogoImage).catch(() => {});
     if (newSenUploaded && senImage !== persistedSen) deleteUploadedImage(senImage).catch(() => {});
     if (newSchUploaded && schImage !== persistedSch) deleteUploadedImage(schImage).catch(() => {});
     if (newRapUploaded && rapImage !== persistedRap) deleteUploadedImage(rapImage).catch(() => {});
@@ -1337,6 +1374,19 @@ async function saveHomeSettings() {
   } finally {
     buttons.forEach(b => { b.disabled = false; });
   }
+}
+
+function useDefaultHeaderLogo() {
+  $("headerLogoFile").value = "";
+  $("currentHeaderLogo").value = "";
+  $("headerShowLogoAdmin").checked = true;
+  renderHeaderLogoPreview("");
+  notice("mainNotice", "Logo F padrão selecionada. Clique em “Salvar página inicial” para confirmar.", "");
+}
+
+function hideHeaderLogo() {
+  $("headerShowLogoAdmin").checked = false;
+  notice("mainNotice", "Logo marcada para ocultar. Clique em “Salvar página inicial” para confirmar.", "");
 }
 
 function setHeroDefault(brand) {
@@ -1537,6 +1587,13 @@ $("clearNewImages").addEventListener("click", () => {
   $("imageFiles").value = "";
   renderProductImageEditor();
 });
+$("headerLogoFile").addEventListener("change", () => {
+  previewFile("headerLogoFile", "headerLogoPreview");
+  $("headerLogoDefaultPreview").classList.add("hidden");
+  $("headerShowLogoAdmin").checked = true;
+});
+$("useDefaultHeaderLogo").addEventListener("click", useDefaultHeaderLogo);
+$("hideHeaderLogo").addEventListener("click", hideHeaderLogo);
 $("sennelierHeroFile").addEventListener("change", () => previewFile("sennelierHeroFile", "sennelierHeroPreview"));
 $("schminckeHeroFile").addEventListener("change", () => previewFile("schminckeHeroFile", "schminckeHeroPreview"));
 $("raphaelHeroFile").addEventListener("change", () => previewFile("raphaelHeroFile", "raphaelHeroPreview"));

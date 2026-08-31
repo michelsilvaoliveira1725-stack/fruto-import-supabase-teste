@@ -178,7 +178,37 @@
 
       <div class="admin-subpanel header-admin-box">
         <div class="panel-title-row compact-row">
-          <div><h3>Cabeçalho do catálogo</h3><p class="muted small">Edite os textos do topo sem alterar o funcionamento dos botões.</p></div>
+          <div><h3>Cabeçalho do catálogo</h3><p class="muted small">Edite a logo, os textos do topo e a posição da etiqueta sobre as fotos dos produtos.</p></div>
+        </div>
+        <div class="header-visual-admin">
+          <div class="header-logo-admin-card">
+            <div class="field">
+              <label class="switch-line"><input type="checkbox" id="headerShowLogoAdmin"><span class="switch-ui" aria-hidden="true"></span><b>Mostrar logo no topo</b></label>
+            </div>
+            <input type="hidden" id="currentHeaderLogo">
+            <div class="header-logo-preview-box">
+              <span class="brand-mark admin-logo-default" id="headerLogoDefaultPreview">F</span>
+              <img id="headerLogoPreview" class="header-logo-preview hidden" alt="Prévia da logo">
+            </div>
+            <div class="field"><label>Trocar logo por imagem</label><input id="headerLogoFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+            <div class="actions compact-actions">
+              <button class="secondary small-button" type="button" id="useDefaultHeaderLogo">Usar logo F padrão</button>
+              <button class="secondary small-button" type="button" id="hideHeaderLogo">Ocultar logo</button>
+            </div>
+          </div>
+          <div class="header-label-admin-card">
+            <div class="field"><label>Posição da etiqueta da marca sobre a foto</label>
+              <select id="brandLabelPositionAdmin">
+                <option value="left">Esquerda em cima</option>
+                <option value="center">Centro em cima</option>
+                <option value="right">Direita em cima</option>
+                <option value="hidden">Ocultar etiqueta</option>
+              </select>
+            </div>
+            <p class="muted small">Essa opção controla a etiqueta “Sennelier”, “Schmincke” ou “Raphaël” que aparece sobre a foto do produto.</p>
+          </div>
+        </div>
+        <div class="panel-title-row compact-row header-name-toggle">
           <label class="switch-line"><input type="checkbox" id="headerShowBrandNameAdmin"><span class="switch-ui" aria-hidden="true"></span><b>Mostrar nome ao lado da logo</b></label>
         </div>
         <div class="form-grid header-admin-grid">
