@@ -11,12 +11,13 @@ const DEFAULT_HOME = {
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
+    raphaelLabel: "Raphaël",
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
-  title: "Duas referências mundiais em materiais artísticos.",
-  intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
+  title: "Três referências mundiais em materiais artísticos.",
+  intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
@@ -47,6 +48,11 @@ const DEFAULT_HOME = {
     catalogImage: "",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
+  },
+  raphael: {
+    kicker: "Raphaël 🇫🇷", title: "RAPHAËL", description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
+    chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França", button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   }
 };
 
@@ -178,6 +184,7 @@ function normalizeHeader(raw, fallback = DEFAULT_HOME.header) {
     homeLabel: valueOr(source, "homeLabel", fallback.homeLabel, 30),
     sennelierLabel: valueOr(source, "sennelierLabel", fallback.sennelierLabel, 30),
     schminckeLabel: valueOr(source, "schminckeLabel", fallback.schminckeLabel, 30),
+    raphaelLabel: valueOr(source, "raphaelLabel", fallback.raphaelLabel, 30),
     quoteLabel: valueOr(source, "quoteLabel", fallback.quoteLabel, 30),
     searchPlaceholder: valueOr(source, "searchPlaceholder", fallback.searchPlaceholder, 100)
   };
@@ -193,7 +200,8 @@ function normalizeHome(raw, fallback = DEFAULTS.home) {
     videos: normalizeVideos(source.videos, fallback.videos || DEFAULT_VIDEOS),
     benefits: normalizeBenefits(source.benefits, fallback.benefits),
     sennelier: normalizeBrand(source.sennelier, fallback.sennelier),
-    schmincke: normalizeBrand(source.schmincke, fallback.schmincke)
+    schmincke: normalizeBrand(source.schmincke, fallback.schmincke),
+    raphael: normalizeBrand(source.raphael, fallback.raphael)
   };
 }
 

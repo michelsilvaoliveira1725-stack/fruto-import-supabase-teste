@@ -172,7 +172,7 @@ export default async (req) => {
     y -= 5;
   }
 
-  const brandOrder = ["Sennelier", "Schmincke"];
+  const brandOrder = ["Sennelier", "Schmincke", "Raphaël"];
   const ordered = [...items].sort((a, b) => {
     const ai = brandOrder.indexOf(a.brand), bi = brandOrder.indexOf(b.brand);
     const ax = ai < 0 ? 99 : ai, bx = bi < 0 ? 99 : bi;
