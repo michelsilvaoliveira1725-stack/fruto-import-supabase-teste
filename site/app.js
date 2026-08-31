@@ -93,7 +93,7 @@ function clampQty(value) {
 
 function salePack(product) {
   const pack = Number(product?.salePack);
-  return pack === 5 ? 5 : pack === 3 ? 3 : 1;
+  return pack === 5 ? 5 : pack === 4 ? 4 : pack === 3 ? 3 : 1;
 }
 
 function stockControlEnabled(product) {

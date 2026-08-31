@@ -186,7 +186,7 @@ function variationValue(value) {
 
 function salePackValue(value) {
   const pack = Number(value);
-  return pack === 5 ? 5 : pack === 3 ? 3 : 1;
+  return pack === 5 ? 5 : pack === 4 ? 4 : pack === 3 ? 3 : 1;
 }
 
 function salePackLabel(product) {
