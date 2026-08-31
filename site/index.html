@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1736">
-  <meta name="description" content="Catálogo digital Fruto Import — Sennelier e Schmincke.">
+  <meta name="description" content="Catálogo digital Fruto Import — Sennelier, Schmincke e Raphaël.">
   <title>Fruto Import | Catálogo Digital</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
@@ -35,6 +35,7 @@
       <button data-view="home" class="nav-brand active" id="navHomeLabel">Início</button>
       <button data-brand="Sennelier" class="nav-brand" id="navSennelierLabel">Sennelier</button>
       <button data-brand="Schmincke" class="nav-brand" id="navSchminckeLabel">Schmincke</button>
+      <button data-brand="Raphaël" class="nav-brand" id="navRaphaelLabel">Raphaël</button>
     </nav>
     <div class="header-search hidden" id="headerSearch">
       <input id="search" placeholder="Pesquisar por produto, código ou categoria..." aria-label="Pesquisar produtos">
@@ -54,8 +55,8 @@
     <div class="landing-copy">
       <div>
         <span class="eyebrow" id="landingEyebrow">CATÁLOGO DIGITAL · FRUTO IMPORT</span>
-        <h1 id="landingTitle">Duas referências mundiais em materiais artísticos.</h1>
-        <p id="landingIntro">Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.</p>
+        <h1 id="landingTitle">Três referências mundiais em materiais artísticos.</h1>
+        <p id="landingIntro">Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.</p>
       </div>
       <span id="totalCount" class="hidden" aria-hidden="true">0</span>
     </div>
@@ -98,6 +99,16 @@
             <span><b id="schminckeCount">0</b> cadastrados</span>
             <button data-open-brand="Schmincke" id="schminckeButtonText">Ver Catálogo Schmincke →</button>
           </div>
+        </div>
+      </article>
+      <article class="brand-choice brand-showcase raphael-card">
+        <div class="brand-showcase-media"><img id="raphaelHeroImage" src="/assets/hero-raphael.png" alt="Destaque Raphaël" loading="eager"></div>
+        <div class="brand-card-content brand-card-content-v3">
+          <div class="country-line" id="raphaelKicker">Raphaël 🇫🇷</div>
+          <h2 id="raphaelTitle">RAPHAËL</h2>
+          <p id="raphaelDescription">Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.</p>
+          <div class="chips" aria-label="Destaques Raphaël"><span id="raphaelChip1">Pincéis profissionais</span><span id="raphaelChip2">Belas-Artes</span><span id="raphaelChip3">França</span></div>
+          <div class="brand-card-footer"><span><b id="raphaelCount">0</b> cadastrados</span><button data-open-brand="Raphaël" id="raphaelButtonText">Ver Catálogo Raphaël →</button></div>
         </div>
       </article>
     </div>

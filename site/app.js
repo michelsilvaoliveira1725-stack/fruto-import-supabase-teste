@@ -1,4 +1,4 @@
-const BRANDS = ["Sennelier", "Schmincke"];
+const BRANDS = ["Sennelier", "Schmincke", "Raphaël"];
 const PAGE_SIZE = 48;
 const DEFAULT_HOME = {
   header: {
@@ -7,12 +7,13 @@ const DEFAULT_HOME = {
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
+    raphaelLabel: "Raphaël",
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
-  title: "Duas referências mundiais em materiais artísticos.",
-  intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
+  title: "Três referências mundiais em materiais artísticos.",
+  intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
@@ -43,6 +44,13 @@ const DEFAULT_HOME = {
     catalogImage: "",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
+  },
+  raphael: {
+    kicker: "Raphaël 🇫🇷", title: "RAPHAËL",
+    description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
+    chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França",
+    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   },
   videos: {
     enabled: false,
@@ -297,6 +305,7 @@ function homeSettings() {
     benefits: DEFAULT_HOME.benefits.map((fallback, i) => ({ ...fallback, ...(Array.isArray(home.benefits) ? home.benefits[i] : {}) })),
     sennelier: { ...DEFAULT_HOME.sennelier, ...(home.sennelier || {}) },
     schmincke: { ...DEFAULT_HOME.schmincke, ...(home.schmincke || {}) },
+    raphael: { ...DEFAULT_HOME.raphael, ...(home.raphael || {}) },
     videos: { ...DEFAULT_HOME.videos, ...videos, items: DEFAULT_HOME.videos.items.map((fallback, i) => ({ ...fallback, ...(Array.isArray(videos.items) ? videos.items[i] : {}) })) }
   };
 }
@@ -314,6 +323,7 @@ function applySettings() {
   $("navHomeLabel").textContent = header.homeLabel || DEFAULT_HOME.header.homeLabel;
   $("navSennelierLabel").textContent = header.sennelierLabel || DEFAULT_HOME.header.sennelierLabel;
   $("navSchminckeLabel").textContent = header.schminckeLabel || DEFAULT_HOME.header.schminckeLabel;
+  $("navRaphaelLabel").textContent = header.raphaelLabel || DEFAULT_HOME.header.raphaelLabel;
   $("quoteButtonLabel").textContent = header.quoteLabel || DEFAULT_HOME.header.quoteLabel;
   $("search").placeholder = header.searchPlaceholder || DEFAULT_HOME.header.searchPlaceholder;
   $("landingEyebrow").textContent = h.eyebrow;
@@ -322,7 +332,8 @@ function applySettings() {
 
   const map = [
     ["sennelier", "sennelier"],
-    ["schmincke", "schmincke"]
+    ["schmincke", "schmincke"],
+    ["raphael", "raphael"]
   ];
   for (const [prefix, key] of map) {
     const b = h[key];
@@ -457,9 +468,11 @@ function applyQuoteSettings() {
 function updateLandingCounts() {
   const s = countByBrand("Sennelier");
   const c = countByBrand("Schmincke");
+  const r = countByBrand("Raphaël");
   $("sennelierCount").textContent = s.toLocaleString("pt-BR");
   $("schminckeCount").textContent = c.toLocaleString("pt-BR");
-  $("totalCount").textContent = (s + c).toLocaleString("pt-BR");
+  $("raphaelCount").textContent = r.toLocaleString("pt-BR");
+  $("totalCount").textContent = (s + c + r).toLocaleString("pt-BR");
 }
 
 function setNavActive(value) {
@@ -497,9 +510,10 @@ function openBrand(brand) {
   $("search").value = "";
 
   const h = homeSettings();
-  const isSennelier = brand === "Sennelier";
-  const b = isSennelier ? h.sennelier : h.schmincke;
-  $("catalogHero").classList.toggle("schmincke", !isSennelier);
+  const brandKey = brand === "Sennelier" ? "sennelier" : brand === "Schmincke" ? "schmincke" : "raphael";
+  const b = h[brandKey];
+  $("catalogHero").classList.toggle("schmincke", brand === "Schmincke");
+  $("catalogHero").classList.toggle("raphael", brand === "Raphaël");
   const catalogHero = $("catalogHero");
   if (b.catalogImage) {
     catalogHero.style.backgroundImage = `linear-gradient(rgba(8,31,75,.78), rgba(8,31,75,.78)), url("${b.catalogImage}")`;

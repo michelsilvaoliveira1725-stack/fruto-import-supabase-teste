@@ -328,3 +328,8 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
   .site-header .header-brand-nav .nav-brand{font-size:11px;padding:8px 5px}
   .site-header .quote-button{padding:9px 10px}
 }
+
+/* V17.2 - Raphaël */
+@media (min-width:1000px){.brand-choices-v3{grid-template-columns:repeat(3,minmax(0,1fr));}}
+.raphael-card .brand-showcase-media img{object-fit:contain;background:#fff;padding:22px;}
+.catalog-hero.raphael{background-color:#171717;}

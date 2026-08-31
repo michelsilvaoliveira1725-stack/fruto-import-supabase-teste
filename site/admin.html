@@ -64,6 +64,7 @@
       <div class="admin-stats">
         <div class="stat"><b id="statSennelier">0</b><span>Sennelier / 2.000</span></div>
         <div class="stat"><b id="statSchmincke">0</b><span>Schmincke / 2.000</span></div>
+        <div class="stat"><b id="statRaphael">0</b><span>Raphaël / 1.000</span></div>
         <button class="secondary" id="logoutBtn">Sair</button>
       </div>
     </div>
@@ -185,6 +186,7 @@
           <div class="field"><label>Texto do botão Início</label><input id="headerHomeLabelAdmin" maxlength="30" placeholder="Início"></div>
           <div class="field"><label>Texto do botão Sennelier</label><input id="headerSennelierLabelAdmin" maxlength="30" placeholder="Sennelier"></div>
           <div class="field"><label>Texto do botão Schmincke</label><input id="headerSchminckeLabelAdmin" maxlength="30" placeholder="Schmincke"></div>
+          <div class="field"><label>Texto do botão Raphaël</label><input id="headerRaphaelLabelAdmin" maxlength="30" placeholder="Raphaël"></div>
           <div class="field"><label>Texto do botão Orçamento</label><input id="headerQuoteLabelAdmin" maxlength="30" placeholder="Orçamento"></div>
           <div class="field"><label>Texto dentro da busca</label><input id="headerSearchPlaceholderAdmin" maxlength="100" placeholder="Pesquisar por produto, código ou categoria..."></div>
         </div>
@@ -236,6 +238,20 @@
           <img id="schminckeCatalogHeroPreview" class="hero-admin-preview catalog-hero-admin-preview hidden" alt="Prévia do fundo do catálogo Schmincke">
           <button class="secondary small-button" type="button" id="clearSchminckeCatalogHero">Remover imagem do fundo do catálogo</button>
         </div>
+        <div class="admin-subpanel brand-admin-card">
+          <h3>Raphaël</h3><input type="hidden" id="currentRaphaelHero">
+          <div class="field"><label>Imagem de destaque / fundo</label><input id="raphaelHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="raphaelHeroPreview" class="hero-admin-preview" alt="Prévia Raphaël"><button class="secondary small-button" type="button" id="resetRaphaelHero">Usar imagem padrão</button>
+          <div class="field"><label>Identificação / país</label><input id="raphaelKickerAdmin" maxlength="80"></div>
+          <div class="field"><label>Título</label><input id="raphaelTitleAdmin" maxlength="80"></div>
+          <div class="field"><label>Descrição</label><textarea id="raphaelDescriptionAdmin" maxlength="360" rows="4"></textarea></div>
+          <div class="three-fields"><div class="field"><label>Destaque 1</label><input id="raphaelChip1Admin" maxlength="60"></div><div class="field"><label>Destaque 2</label><input id="raphaelChip2Admin" maxlength="60"></div><div class="field"><label>Destaque 3</label><input id="raphaelChip3Admin" maxlength="60"></div></div>
+          <div class="field"><label>Texto do botão</label><input id="raphaelButtonAdmin" maxlength="80"></div>
+          <div class="field"><label>Título dentro do catálogo</label><input id="raphaelCatalogTitleAdmin" maxlength="100"></div>
+          <div class="field"><label>Texto dentro do catálogo</label><textarea id="raphaelCatalogSubtitleAdmin" maxlength="360" rows="3"></textarea></div>
+          <input type="hidden" id="currentRaphaelCatalogHero"><div class="field"><label>Imagem de fundo dentro do catálogo</label><input id="raphaelCatalogHeroFile" type="file" accept="image/jpeg,image/png,image/webp"></div>
+          <img id="raphaelCatalogHeroPreview" class="hero-admin-preview catalog-hero-admin-preview hidden" alt="Prévia do fundo do catálogo Raphaël"><button class="secondary small-button" type="button" id="clearRaphaelCatalogHero">Remover imagem do fundo do catálogo</button>
+        </div>
       </div>
 
       <div class="admin-subpanel video-admin-box">
@@ -270,6 +286,7 @@
           <button type="button" class="product-brand-tab active" data-product-brand="all">Todos</button>
           <button type="button" class="product-brand-tab" data-product-brand="Sennelier">Sennelier <span id="brandCountSennelier">0</span></button>
           <button type="button" class="product-brand-tab" data-product-brand="Schmincke">Schmincke <span id="brandCountSchmincke">0</span></button>
+          <button type="button" class="product-brand-tab" data-product-brand="Raphaël">Raphaël <span id="brandCountRaphael">0</span></button>
         </div>
       </div>
 
@@ -293,7 +310,7 @@
           <section class="product-form-group">
             <div class="product-form-group-head"><span>02</span><div><h3>Classificação</h3><p>Organize marca, categoria, tamanho e série.</p></div></div>
             <div class="form-grid">
-              <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+              <div class="field"><label>Marca *</label><select id="brand" required><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option><option value="Raphaël">Raphaël</option></select></div>
               <div class="field"><label>Categoria *</label><input id="cat" required maxlength="100" placeholder="Ex.: Pastel Oleoso, Bastão Óleo, Aquarela"></div>
               <div class="field"><label>Variação / tamanho <span class="muted">(opcional)</span></label><input id="variation" maxlength="80" placeholder="Ex.: 5 ml, 36 ml, 38 ml, 96 ml"><span class="muted small">Produtos da mesma categoria podem ser separados por tamanho ou apresentação sem criar novas categorias.</span></div>
               <div class="field"><label>Série <span class="muted">(opcional)</span></label><input id="series" maxlength="40" placeholder="Ex.: 1, 2, 3 ou 4"><span class="muted small">Quando preenchida, o catálogo cria filtros de Série dentro da categoria e da variação selecionada.</span></div>
@@ -345,7 +362,7 @@
           <span class="admin-step-badge">Organização · Em massa</span>
         </div>
         <div class="form-grid organize-filters">
-          <div class="field"><label>Marca *</label><select id="organizeBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+          <div class="field"><label>Marca *</label><select id="organizeBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option><option value="Raphaël">Raphaël</option></select></div>
           <div class="field"><label>Categoria atual *</label><select id="organizeCategory"></select></div>
           <div class="field"><label>Variação atual</label><select id="organizeCurrentVariation"><option value="">Todas / sem filtro</option></select></div>
           <div class="field"><label>Série</label><select id="organizeSeries"><option value="">Todas / sem filtro</option></select></div>
@@ -365,7 +382,7 @@
           <span class="admin-step-badge">Opcional · Em massa</span>
         </div>
         <div class="form-grid bulk-price-filters">
-          <div class="field"><label>Marca *</label><select id="bulkBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option></select></div>
+          <div class="field"><label>Marca *</label><select id="bulkBrand"><option value="Sennelier">Sennelier</option><option value="Schmincke">Schmincke</option><option value="Raphaël">Raphaël</option></select></div>
           <div class="field"><label>Categoria *</label><select id="bulkCategory"></select></div>
           <div class="field"><label>Variação / tamanho</label><select id="bulkVariation"><option value="">Todas / sem filtro</option></select></div>
           <div class="field"><label>Série</label><select id="bulkSeries"><option value="">Todas / sem filtro</option></select></div>

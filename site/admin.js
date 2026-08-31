@@ -7,12 +7,13 @@ const DEFAULT_HOME = {
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
+    raphaelLabel: "Raphaël",
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
   eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
-  title: "Duas referências mundiais em materiais artísticos.",
-  intro: "Explore os produtos Sennelier e Schmincke, monte sua seleção e solicite seu orçamento de forma rápida.",
+  title: "Três referências mundiais em materiais artísticos.",
+  intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
@@ -43,6 +44,13 @@ const DEFAULT_HOME = {
     catalogImage: "",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
+  },
+  raphael: {
+    kicker: "Raphaël 🇫🇷", title: "RAPHAËL",
+    description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
+    chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França",
+    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   },
   videos: {
     enabled: false,
@@ -219,6 +227,7 @@ function normalizedHome(raw) {
     benefits: DEFAULT_HOME.benefits.map((fallback, i) => ({ ...fallback, ...(Array.isArray(home.benefits) ? home.benefits[i] : {}) })),
     sennelier: { ...DEFAULT_HOME.sennelier, ...(home.sennelier || {}) },
     schmincke: { ...DEFAULT_HOME.schmincke, ...(home.schmincke || {}) },
+    raphael: { ...DEFAULT_HOME.raphael, ...(home.raphael || {}) },
     videos: {
       ...DEFAULT_HOME.videos,
       ...v,
@@ -279,7 +288,7 @@ document.querySelectorAll(".admin-section-tab").forEach(button => {
 }
 
 function setProductBrandFilter(brand) {
-  activeAdminBrand = ["Sennelier", "Schmincke"].includes(brand) ? brand : "all";
+  activeAdminBrand = ["Sennelier", "Schmincke", "Raphaël"].includes(brand) ? brand : "all";
   page = 1;
   document.querySelectorAll(".product-brand-tab").forEach(button => {
     const active = button.dataset.productBrand === activeAdminBrand;
@@ -502,6 +511,7 @@ function fillHomeForm(home) {
   $("headerHomeLabelAdmin").value = h.header.homeLabel;
   $("headerSennelierLabelAdmin").value = h.header.sennelierLabel;
   $("headerSchminckeLabelAdmin").value = h.header.schminckeLabel;
+  $("headerRaphaelLabelAdmin").value = h.header.raphaelLabel;
   $("headerQuoteLabelAdmin").value = h.header.quoteLabel;
   $("headerSearchPlaceholderAdmin").value = h.header.searchPlaceholder;
 
@@ -535,6 +545,12 @@ function fillHomeForm(home) {
   $("schminckeCatalogHeroPreview").src = h.schmincke.catalogImage || "";
   $("schminckeCatalogHeroPreview").classList.toggle("hidden", !h.schmincke.catalogImage);
 
+  $("currentRaphaelHero").value = h.raphael.image; $("raphaelHeroPreview").src = h.raphael.image;
+  $("raphaelKickerAdmin").value = h.raphael.kicker; $("raphaelTitleAdmin").value = h.raphael.title; $("raphaelDescriptionAdmin").value = h.raphael.description;
+  $("raphaelChip1Admin").value = h.raphael.chip1; $("raphaelChip2Admin").value = h.raphael.chip2; $("raphaelChip3Admin").value = h.raphael.chip3; $("raphaelButtonAdmin").value = h.raphael.button;
+  $("raphaelCatalogTitleAdmin").value = h.raphael.catalogTitle; $("raphaelCatalogSubtitleAdmin").value = h.raphael.catalogSubtitle;
+  $("currentRaphaelCatalogHero").value = h.raphael.catalogImage || ""; $("raphaelCatalogHeroPreview").src = h.raphael.catalogImage || ""; $("raphaelCatalogHeroPreview").classList.toggle("hidden", !h.raphael.catalogImage);
+
   h.benefits.forEach((item, i) => {
     $(`benefit${i + 1}TitleAdmin`).value = item.title;
     $(`benefit${i + 1}TextAdmin`).value = item.text;
@@ -552,10 +568,13 @@ function updateStats() {
   if (!$("statSennelier")) return;
   const sen = products.filter(p => p.brand === "Sennelier").length;
   const sch = products.filter(p => p.brand === "Schmincke").length;
+  const rap = products.filter(p => p.brand === "Raphaël").length;
   $("statSennelier").textContent = sen.toLocaleString("pt-BR");
   $("statSchmincke").textContent = sch.toLocaleString("pt-BR");
+  $("statRaphael").textContent = rap.toLocaleString("pt-BR");
   if ($("brandCountSennelier")) $("brandCountSennelier").textContent = sen.toLocaleString("pt-BR");
   if ($("brandCountSchmincke")) $("brandCountSchmincke").textContent = sch.toLocaleString("pt-BR");
+  if ($("brandCountRaphael")) $("brandCountRaphael").textContent = rap.toLocaleString("pt-BR");
   const available = products.filter(isAvailable).length;
   const soldout = products.length - available;
   const lowStock = products.filter(p => stockControlEnabled(p) && isAvailable(p) && stockQuantityValue(p.stockQuantity) <= 3).length;
@@ -742,7 +761,7 @@ function renderRows() {
   if (!list.length) return;
 
   const q = $("adminSearch").value.trim();
-  const brands = activeAdminBrand === "all" ? ["Sennelier", "Schmincke"] : [activeAdminBrand];
+  const brands = activeAdminBrand === "all" ? ["Sennelier", "Schmincke", "Raphaël"] : [activeAdminBrand];
   brands.forEach(brand => {
     const brandProducts = list.filter(p => p.brand === brand);
     if (!brandProducts.length) return;
@@ -1165,7 +1184,7 @@ async function deleteProduct(code) {
   }
 }
 
-function homePayload(sennelierImage, schminckeImage, sennelierCatalogImage, schminckeCatalogImage) {
+function homePayload(sennelierImage, schminckeImage, raphaelImage, sennelierCatalogImage, schminckeCatalogImage, raphaelCatalogImage) {
   return {
     header: {
       showBrandName: $("headerShowBrandNameAdmin").checked,
@@ -1173,6 +1192,7 @@ function homePayload(sennelierImage, schminckeImage, sennelierCatalogImage, schm
       homeLabel: $("headerHomeLabelAdmin").value,
       sennelierLabel: $("headerSennelierLabelAdmin").value,
       schminckeLabel: $("headerSchminckeLabelAdmin").value,
+      raphaelLabel: $("headerRaphaelLabelAdmin").value,
       quoteLabel: $("headerQuoteLabelAdmin").value,
       searchPlaceholder: $("headerSearchPlaceholderAdmin").value
     },
@@ -1225,6 +1245,12 @@ function homePayload(sennelierImage, schminckeImage, sennelierCatalogImage, schm
       catalogImage: schminckeCatalogImage || "",
       catalogTitle: $("schminckeCatalogTitleAdmin").value,
       catalogSubtitle: $("schminckeCatalogSubtitleAdmin").value
+    },
+    raphael: {
+      kicker: $("raphaelKickerAdmin").value, title: $("raphaelTitleAdmin").value, description: $("raphaelDescriptionAdmin").value,
+      chip1: $("raphaelChip1Admin").value, chip2: $("raphaelChip2Admin").value, chip3: $("raphaelChip3Admin").value,
+      button: $("raphaelButtonAdmin").value, image: raphaelImage, catalogImage: raphaelCatalogImage || "",
+      catalogTitle: $("raphaelCatalogTitleAdmin").value, catalogSubtitle: $("raphaelCatalogSubtitleAdmin").value
     }
   };
 }
@@ -1236,32 +1262,39 @@ async function saveHomeSettings() {
 
   const persistedSen = normalizedHome(currentSettings.home).sennelier.image;
   const persistedSch = normalizedHome(currentSettings.home).schmincke.image;
+  const persistedRap = normalizedHome(currentSettings.home).raphael.image;
   let senImage = $("currentSennelierHero").value || persistedSen || DEFAULT_HOME.sennelier.image;
   let schImage = $("currentSchminckeHero").value || persistedSch || DEFAULT_HOME.schmincke.image;
+  let rapImage = $("currentRaphaelHero").value || persistedRap || DEFAULT_HOME.raphael.image;
   const persistedSenCatalog = normalizedHome(currentSettings.home).sennelier.catalogImage || "";
   const persistedSchCatalog = normalizedHome(currentSettings.home).schmincke.catalogImage || "";
+  const persistedRapCatalog = normalizedHome(currentSettings.home).raphael.catalogImage || "";
   let senCatalogImage = $("currentSennelierCatalogHero").value || "";
   let schCatalogImage = $("currentSchminckeCatalogHero").value || "";
+  let rapCatalogImage = $("currentRaphaelCatalogHero").value || "";
   let newSenUploaded = false;
   let newSchUploaded = false;
+  let newRapUploaded = false;
   let newSenCatalogUploaded = false;
   let newSchCatalogUploaded = false;
+  let newRapCatalogUploaded = false;
 
   try {
     const senFile = $("sennelierHeroFile").files[0];
     const schFile = $("schminckeHeroFile").files[0];
+    const rapFile = $("raphaelHeroFile").files[0];
     if (senFile) {
       senImage = await uploadImage(senFile, true);
       newSenUploaded = true;
     }
-    if (schFile) {
-      schImage = await uploadImage(schFile, true);
-      newSchUploaded = true;
-    }
+    if (schFile) { schImage = await uploadImage(schFile, true); newSchUploaded = true; }
+    if (rapFile) { rapImage = await uploadImage(rapFile, true); newRapUploaded = true; }
     const senCatalogFile = $("sennelierCatalogHeroFile").files[0];
     const schCatalogFile = $("schminckeCatalogHeroFile").files[0];
+    const rapCatalogFile = $("raphaelCatalogHeroFile").files[0];
     if (senCatalogFile) { senCatalogImage = await uploadImage(senCatalogFile, true); newSenCatalogUploaded = true; }
     if (schCatalogFile) { schCatalogImage = await uploadImage(schCatalogFile, true); newSchCatalogUploaded = true; }
+    if (rapCatalogFile) { rapCatalogImage = await uploadImage(rapCatalogFile, true); newRapCatalogUploaded = true; }
 
     for (let n = 1; n <= 4; n++) {
       const file = $(`video${n}ThumbFile`)?.files?.[0];
@@ -1272,18 +1305,22 @@ async function saveHomeSettings() {
         if (oldThumb && oldThumb !== newThumb) deleteUploadedImage(oldThumb).catch(() => {});
       }
     }
-    const d = await api("/api/settings", { method: "PUT", json: { home: homePayload(senImage, schImage, senCatalogImage, schCatalogImage) } });
+    const d = await api("/api/settings", { method: "PUT", json: { home: homePayload(senImage, schImage, rapImage, senCatalogImage, schCatalogImage, rapCatalogImage) } });
     currentSettings = { ...currentSettings, ...d, home: normalizedHome(d.home) };
 
     if (persistedSen && persistedSen !== senImage) deleteUploadedImage(persistedSen).catch(() => {});
     if (persistedSch && persistedSch !== schImage) deleteUploadedImage(persistedSch).catch(() => {});
+    if (persistedRap && persistedRap !== rapImage) deleteUploadedImage(persistedRap).catch(() => {});
     if (persistedSenCatalog && persistedSenCatalog !== senCatalogImage) deleteUploadedImage(persistedSenCatalog).catch(() => {});
     if (persistedSchCatalog && persistedSchCatalog !== schCatalogImage) deleteUploadedImage(persistedSchCatalog).catch(() => {});
+    if (persistedRapCatalog && persistedRapCatalog !== rapCatalogImage) deleteUploadedImage(persistedRapCatalog).catch(() => {});
 
     $("sennelierHeroFile").value = "";
     $("schminckeHeroFile").value = "";
+    $("raphaelHeroFile").value = "";
     $("sennelierCatalogHeroFile").value = "";
     $("schminckeCatalogHeroFile").value = "";
+    $("raphaelCatalogHeroFile").value = "";
     for (const old of [...new Set(removedVideoThumbs)]) { if (old) deleteUploadedImage(old).catch(() => {}); }
     removedVideoThumbs = [];
     fillHomeForm(currentSettings.home);
@@ -1292,8 +1329,10 @@ async function saveHomeSettings() {
   } catch (e) {
     if (newSenUploaded && senImage !== persistedSen) deleteUploadedImage(senImage).catch(() => {});
     if (newSchUploaded && schImage !== persistedSch) deleteUploadedImage(schImage).catch(() => {});
+    if (newRapUploaded && rapImage !== persistedRap) deleteUploadedImage(rapImage).catch(() => {});
     if (newSenCatalogUploaded && senCatalogImage !== persistedSenCatalog) deleteUploadedImage(senCatalogImage).catch(() => {});
     if (newSchCatalogUploaded && schCatalogImage !== persistedSchCatalog) deleteUploadedImage(schCatalogImage).catch(() => {});
+    if (newRapCatalogUploaded && rapCatalogImage !== persistedRapCatalog) deleteUploadedImage(rapCatalogImage).catch(() => {});
     notice("mainNotice", e.message, "error");
   } finally {
     buttons.forEach(b => { b.disabled = false; });
@@ -1301,11 +1340,12 @@ async function saveHomeSettings() {
 }
 
 function setHeroDefault(brand) {
-  const isSen = brand === "Sennelier";
-  const input = $(isSen ? "sennelierHeroFile" : "schminckeHeroFile");
-  const current = $(isSen ? "currentSennelierHero" : "currentSchminckeHero");
-  const preview = $(isSen ? "sennelierHeroPreview" : "schminckeHeroPreview");
-  const url = isSen ? DEFAULT_HOME.sennelier.image : DEFAULT_HOME.schmincke.image;
+  const key = brand === "Sennelier" ? "sennelier" : brand === "Schmincke" ? "schmincke" : "raphael";
+  const prefix = key === "sennelier" ? "Sennelier" : key === "schmincke" ? "Schmincke" : "Raphael";
+  const input = $(`${key}HeroFile`);
+  const current = $(`current${prefix}Hero`);
+  const preview = $(`${key}HeroPreview`);
+  const url = DEFAULT_HOME[key].image;
   input.value = "";
   current.value = url;
   preview.src = url;
@@ -1427,7 +1467,7 @@ async function saveOrganize() {
   } catch(e){ notice("mainNotice",e.message,"error"); } finally { btn.disabled=false; }
 }
 function clearCatalogHero(brand) {
-  const isSen=brand==="Sennelier"; const cur=$(isSen?"currentSennelierCatalogHero":"currentSchminckeCatalogHero"); const input=$(isSen?"sennelierCatalogHeroFile":"schminckeCatalogHeroFile"); const preview=$(isSen?"sennelierCatalogHeroPreview":"schminckeCatalogHeroPreview");
+  const key=brand==="Sennelier"?"sennelier":brand==="Schmincke"?"schmincke":"raphael"; const prefix=key==="sennelier"?"Sennelier":key==="schmincke"?"Schmincke":"Raphael"; const cur=$(`current${prefix}CatalogHero`); const input=$(`${key}CatalogHeroFile`); const preview=$(`${key}CatalogHeroPreview`);
   cur.value=""; input.value=""; preview.src=""; preview.classList.add("hidden"); notice("mainNotice",`Imagem do catálogo ${brand} removida da prévia. Clique em Salvar página inicial para confirmar.`,"");
 }
 
@@ -1463,6 +1503,7 @@ $("saveHomeSettings").addEventListener("click", saveHomeSettings);
 $("saveHomeSettingsBottom").addEventListener("click", saveHomeSettings);
 $("resetSennelierHero").addEventListener("click", () => setHeroDefault("Sennelier"));
 $("resetSchminckeHero").addEventListener("click", () => setHeroDefault("Schmincke"));
+$("resetRaphaelHero").addEventListener("click", () => setHeroDefault("Raphaël"));
 $("logoutBtn").addEventListener("click", () => {
   token = "";
   localStorage.removeItem("fruto_import_admin_token");
@@ -1498,6 +1539,7 @@ $("clearNewImages").addEventListener("click", () => {
 });
 $("sennelierHeroFile").addEventListener("change", () => previewFile("sennelierHeroFile", "sennelierHeroPreview"));
 $("schminckeHeroFile").addEventListener("change", () => previewFile("schminckeHeroFile", "schminckeHeroPreview"));
+$("raphaelHeroFile").addEventListener("change", () => previewFile("raphaelHeroFile", "raphaelHeroPreview"));
 
 
 $("showResetBtn")?.addEventListener("click", () => $("resetFields").classList.toggle("hidden"));
@@ -1528,7 +1570,9 @@ checkStatus().finally(startAdminCatalogAutoRefresh);
 $("saveSettingsBottom")?.addEventListener("click", saveSettings);
 $("sennelierCatalogHeroFile")?.addEventListener("change", () => previewFile("sennelierCatalogHeroFile", "sennelierCatalogHeroPreview"));
 $("schminckeCatalogHeroFile")?.addEventListener("change", () => previewFile("schminckeCatalogHeroFile", "schminckeCatalogHeroPreview"));
+$("raphaelCatalogHeroFile")?.addEventListener("change", () => previewFile("raphaelCatalogHeroFile", "raphaelCatalogHeroPreview"));
 $("clearSennelierCatalogHero")?.addEventListener("click", () => clearCatalogHero("Sennelier"));
+$("clearRaphaelCatalogHero")?.addEventListener("click", () => clearCatalogHero("Raphaël"));
 $("clearSchminckeCatalogHero")?.addEventListener("click", () => clearCatalogHero("Schmincke"));
 $("bulkBrand")?.addEventListener("change", () => { refreshBulkFilters(); $("bulkPreviewBox")?.classList.add("hidden"); });
 $("bulkCategory")?.addEventListener("change", () => { refreshBulkVariation(); $("bulkPreviewBox")?.classList.add("hidden"); });
