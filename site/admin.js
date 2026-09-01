@@ -31,7 +31,7 @@ const DEFAULT_HOME = {
     chip3: "Aquarelas",
     button: "Ver Catálogo Sennelier →",
     image: "/assets/hero-sennelier.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-sennelier-v17-4.jpg",
     catalogTitle: "Catálogo Sennelier",
     catalogSubtitle: "Materiais artísticos de tradição francesa — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -44,7 +44,7 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },

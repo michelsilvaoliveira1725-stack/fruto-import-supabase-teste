@@ -350,3 +350,15 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
 .chips.hidden{display:none!important}
 @media(max-width:760px){.header-logo-image{height:35px;max-width:120px}.header-visual-admin{grid-template-columns:1fr}}
 
+
+/* ===== V17.4: banners centralizados + carregamento sem foto antiga ===== */
+.settings-loading .brand-showcase-media img,
+.settings-loading .site-header #homeLogo{opacity:0;visibility:hidden}
+.brand-showcase-media img,.site-header #homeLogo{transition:opacity .16s ease}
+.catalog-hero.has-catalog-banner{min-height:300px;background-position:center center!important;background-size:cover!important;display:flex;flex-direction:column;justify-content:center}
+.catalog-hero.has-catalog-banner:after{display:none!important}
+.catalog-hero.has-catalog-banner .back-home,
+.catalog-hero.has-catalog-banner .catalog-country,
+.catalog-hero.has-catalog-banner h1,
+.catalog-hero.has-catalog-banner p{text-shadow:0 2px 10px rgba(0,0,0,.38)}
+@media(max-width:760px){.catalog-hero.has-catalog-banner{min-height:235px;background-position:center center!important}}

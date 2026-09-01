@@ -31,7 +31,7 @@ const DEFAULT_HOME = {
     chip3: "Aquarelas",
     button: "Ver Catálogo Sennelier →",
     image: "/assets/hero-sennelier.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-sennelier-v17-4.jpg",
     catalogTitle: "Catálogo Sennelier",
     catalogSubtitle: "Materiais artísticos de tradição francesa — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -44,7 +44,7 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -333,12 +333,20 @@ function applySettings() {
   logoImage.classList.add("hidden");
   if (showLogo && customLogo) {
     logoImage.classList.remove("hidden");
-    attachReliableImage(logoImage, [customLogo], {
-      alt: "Logo Fruto Import",
-      lazy: false,
-      onEmpty: () => { logoImage.classList.add("hidden"); logoMark.classList.remove("hidden"); }
-    });
+    if (logoImage.dataset.sourceUrl !== customLogo) {
+      logoImage.dataset.sourceUrl = customLogo;
+      attachReliableImage(logoImage, [customLogo], {
+        alt: "Logo Fruto Import",
+        lazy: false,
+        onEmpty: () => {
+          delete logoImage.dataset.sourceUrl;
+          logoImage.classList.add("hidden");
+          logoMark.classList.remove("hidden");
+        }
+      });
+    }
   } else {
+    delete logoImage.dataset.sourceUrl;
     logoImage.removeAttribute("src");
   }
   const labelPosition = ["left", "center", "right", "hidden"].includes(header.brandLabelPosition) ? header.brandLabelPosition : "left";
@@ -373,7 +381,8 @@ function applySettings() {
     if (chipBox) chipBox.classList.toggle("hidden", !chipValues.some(Boolean));
     $(`${prefix}ButtonText`).textContent = b.button;
     const img = $(`${prefix}HeroImage`);
-    if (img.src !== b.image) img.src = b.image;
+    const desiredImage = String(b.image || "").trim();
+    if (img.getAttribute("src") !== desiredImage) img.src = desiredImage;
   }
 
   h.benefits.forEach((item, i) => {
@@ -525,6 +534,48 @@ function showHome() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+function applyCatalogHero(brand, brandSettings = null) {
+  const h = homeSettings();
+  const brandKey = brand === "Sennelier" ? "sennelier" : brand === "Schmincke" ? "schmincke" : "raphael";
+  const b = brandSettings || h[brandKey];
+  const catalogHero = $("catalogHero");
+  catalogHero.classList.toggle("schmincke", brand === "Schmincke");
+  catalogHero.classList.toggle("raphael", brand === "Raphaël");
+  const banner = String(b?.catalogImage || "").trim();
+  catalogHero.classList.toggle("has-catalog-banner", Boolean(banner));
+  if (banner) {
+    const safeBanner = banner.replace(/["\\]/g, ch => `\\${ch}`);
+    catalogHero.style.backgroundImage = `linear-gradient(rgba(8,31,75,.34), rgba(8,31,75,.44)), url("${safeBanner}")`;
+    catalogHero.style.backgroundSize = "cover";
+    catalogHero.style.backgroundPosition = "center center";
+  } else {
+    catalogHero.style.backgroundImage = "";
+    catalogHero.style.backgroundSize = "";
+    catalogHero.style.backgroundPosition = "";
+  }
+}
+
+async function refreshSettingsNow() {
+  try {
+    const r = await fetch("/api/settings", { cache: "no-store" });
+    if (!r.ok) return false;
+    const next = await r.json();
+    settings = { ...settings, ...next };
+    applySettings();
+    if (currentBrand) {
+      const h = homeSettings();
+      const brandKey = currentBrand === "Sennelier" ? "sennelier" : currentBrand === "Schmincke" ? "schmincke" : "raphael";
+      applyCatalogHero(currentBrand, h[brandKey]);
+      $("catalogCountry").textContent = h[brandKey].kicker;
+      $("catalogTitle").textContent = h[brandKey].catalogTitle;
+      $("catalogSubtitle").textContent = h[brandKey].catalogSubtitle;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function openBrand(brand) {
   if (!BRANDS.includes(brand)) return;
   currentBrand = brand;
@@ -540,18 +591,7 @@ function openBrand(brand) {
   const h = homeSettings();
   const brandKey = brand === "Sennelier" ? "sennelier" : brand === "Schmincke" ? "schmincke" : "raphael";
   const b = h[brandKey];
-  $("catalogHero").classList.toggle("schmincke", brand === "Schmincke");
-  $("catalogHero").classList.toggle("raphael", brand === "Raphaël");
-  const catalogHero = $("catalogHero");
-  if (b.catalogImage) {
-    catalogHero.style.backgroundImage = `linear-gradient(rgba(8,31,75,.78), rgba(8,31,75,.78)), url("${b.catalogImage}")`;
-    catalogHero.style.backgroundSize = "cover";
-    catalogHero.style.backgroundPosition = "center";
-  } else {
-    catalogHero.style.backgroundImage = "";
-    catalogHero.style.backgroundSize = "";
-    catalogHero.style.backgroundPosition = "";
-  }
+  applyCatalogHero(brand, b);
   $("catalogCountry").textContent = b.kicker;
   $("catalogTitle").textContent = b.catalogTitle;
   $("catalogSubtitle").textContent = b.catalogSubtitle;
@@ -1233,7 +1273,10 @@ async function refreshCatalogNow({ force = false, silent = false } = {}) {
 function startCatalogAutoRefresh() {
   clearInterval(catalogRefreshTimer);
   catalogRefreshTimer = setInterval(() => {
-    if (!document.hidden) refreshCatalogNow({ silent: true });
+    if (!document.hidden) {
+      refreshCatalogNow({ silent: true });
+      refreshSettingsNow();
+    }
   }, 7000);
 }
 
@@ -1375,11 +1418,17 @@ async function downloadPdf() {
 }
 
 async function load() {
+  const settingsTask = (async () => {
+    try {
+      const settingsResponse = await fetch("/api/settings", { cache: "no-store" });
+      if (settingsResponse.ok) settings = { ...settings, ...(await settingsResponse.json()) };
+    } catch {}
+    applySettings();
+    document.documentElement.classList.remove("settings-loading");
+  })();
+
   try {
-    const [catalogResponse, settingsResponse] = await Promise.all([
-      fetch("/api/products", { cache: "no-store" }),
-      fetch("/api/settings", { cache: "no-store" })
-    ]);
+    const catalogResponse = await fetch("/api/products", { cache: "no-store" });
     if (!catalogResponse.ok) throw new Error("Catálogo indisponível.");
     const catalogData = await catalogResponse.json();
     products = Array.isArray(catalogData.products) ? catalogData.products : [];
@@ -1393,13 +1442,12 @@ async function load() {
       }
     }
     save();
-    if (settingsResponse.ok) settings = { ...settings, ...(await settingsResponse.json()) };
-    applySettings();
+    await settingsTask;
     updateLandingCounts();
     renderItems();
   } catch {
     products = [];
-    applySettings();
+    await settingsTask;
     updateLandingCounts();
     toast("Não foi possível carregar o catálogo. Atualize a página em alguns instantes.");
   }
@@ -1428,8 +1476,19 @@ $("videoModal").addEventListener("click", e => { if (e.target === $("videoModal"
 $("lightboxPrev").addEventListener("click", () => moveLightbox(-1));
 $("lightboxNext").addEventListener("click", () => moveLightbox(1));
 $("imageLightbox").addEventListener("click", e => { if (e.target === $("imageLightbox")) closeLightbox(); });
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshCatalogNow({ silent: true }); });
-window.addEventListener("focus", () => refreshCatalogNow({ silent: true }));
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    refreshCatalogNow({ silent: true });
+    refreshSettingsNow();
+  }
+});
+window.addEventListener("focus", () => {
+  refreshCatalogNow({ silent: true });
+  refreshSettingsNow();
+});
+window.addEventListener("pageshow", event => {
+  if (event.persisted) window.location.reload();
+});
 
 document.addEventListener("keydown", e => {
   if (!$("productDetailModal").classList.contains("hidden")) {
@@ -1445,6 +1504,5 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeDrawer();
 });
 
-applySettings();
 updateCount();
 load().finally(startCatalogAutoRefresh);
