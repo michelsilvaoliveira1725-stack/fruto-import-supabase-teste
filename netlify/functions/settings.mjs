@@ -5,6 +5,7 @@ const STORE = "fruto-import-settings";
 const KEY = "public";
 
 const DEFAULT_HOME = {
+  bannerRevision: 174,
   header: {
     showLogo: true,
     logoImage: "",
@@ -35,7 +36,7 @@ const DEFAULT_HOME = {
     chip3: "Aquarelas",
     button: "Ver Catálogo Sennelier →",
     image: "/assets/hero-sennelier.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-sennelier-v17-4.jpg",
     catalogTitle: "Catálogo Sennelier",
     catalogSubtitle: "Materiais artísticos de tradição francesa — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -48,7 +49,7 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "",
+    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -200,7 +201,11 @@ function normalizeHeader(raw, fallback = DEFAULT_HOME.header) {
 
 function normalizeHome(raw, fallback = DEFAULTS.home) {
   const source = raw && typeof raw === "object" ? raw : {};
+  const bannerRevision = Object.prototype.hasOwnProperty.call(source, "bannerRevision")
+    ? Number(source.bannerRevision) || 0
+    : Number(fallback.bannerRevision) || 0;
   return {
+    bannerRevision,
     header: normalizeHeader(source.header, fallback.header || DEFAULT_HOME.header),
     eyebrow: valueOr(source, "eyebrow", fallback.eyebrow, 100),
     title: valueOr(source, "title", fallback.title, 180),
@@ -224,8 +229,20 @@ function normalizeStored(current) {
 }
 
 async function readSettings() {
-  const current = await getStore(STORE).get(KEY, { type: "json", consistency: "strong" });
-  return normalizeStored(current);
+  const store = getStore(STORE);
+  const current = await store.get(KEY, { type: "json", consistency: "strong" });
+  const settings = normalizeStored(current);
+  const storedRevision = Number(current?.home?.bannerRevision || 0);
+
+  // V17.4: aplica uma única vez os novos banners enviados pelo usuário.
+  // Depois da migração, qualquer troca feita pelo ADM continua sendo preservada normalmente.
+  if (storedRevision < 174) {
+    settings.home.bannerRevision = 174;
+    settings.home.sennelier.catalogImage = DEFAULT_HOME.sennelier.catalogImage;
+    settings.home.schmincke.catalogImage = DEFAULT_HOME.schmincke.catalogImage;
+    await store.setJSON(KEY, settings);
+  }
+  return settings;
 }
 
 export default async (req) => {
