@@ -6,7 +6,7 @@ const DEFAULT_HOME = {
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORT",
+    brandName: "FRUTO IMPORTADORA",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -14,13 +14,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Import." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -44,7 +44,7 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
+    catalogImage: "/assets/banner-schmincke-v17-6.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -52,7 +52,7 @@ const DEFAULT_HOME = {
     kicker: "Raphaël 🇫🇷", title: "RAPHAËL",
     description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
     chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França",
-    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "/assets/banner-raphael-v17-6.jpg",
     catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   },
   videos: {
@@ -68,13 +68,13 @@ const DEFAULT_HOME = {
 const DEFAULT_QUOTE = {
   title: "Minha solicitação",
   intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORT", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Import", pdfFooterText: "Fruto Import",
-  showCustomer: true, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
+  pdfHeaderTitle: "FRUTO IMPORTADORA", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Importadora", pdfFooterText: "Fruto Importadora",
+  showCustomer: true, showAddress: false, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
   columns: { product: true, code: true, series: false, salePack: false, quantity: true, unitPrice: true, subtotal: false }
 };
 
 let products = [];
-let settings = { businessName: "Fruto Import", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
+let settings = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 let currentBrand = "";
 let currentCat = "Todos";
 let currentVariation = "Todas";
@@ -336,7 +336,7 @@ function applySettings() {
     if (logoImage.dataset.sourceUrl !== customLogo) {
       logoImage.dataset.sourceUrl = customLogo;
       attachReliableImage(logoImage, [customLogo], {
-        alt: "Logo Fruto Import",
+        alt: "Logo Fruto Importadora",
         lazy: false,
         onEmpty: () => {
           delete logoImage.dataset.sourceUrl;
@@ -446,7 +446,7 @@ function renderHomeVideos(raw) {
     const ytThumb = youtubeThumbnail(item.url);
     const thumb = item.thumbnail || ytThumb;
     if (thumb) { const img=document.createElement("img"); img.src=thumb; img.alt=item.title; img.loading="lazy"; img.onerror=()=>{ if (ytThumb && img.src !== ytThumb) img.src=ytThumb; }; media.appendChild(img); }
-    else { const ph=document.createElement("div"); ph.className="video-placeholder"; ph.textContent="FRUTO IMPORT"; media.appendChild(ph); }
+    else { const ph=document.createElement("div"); ph.className="video-placeholder"; ph.textContent="FRUTO IMPORTADORA"; media.appendChild(ph); }
     const play=document.createElement("span"); play.className="video-play"; play.textContent="▶"; media.appendChild(play);
     if (item.duration) { const d=document.createElement("span"); d.className="video-duration"; d.textContent=item.duration; media.appendChild(d); }
     const info=document.createElement("div"); info.className="home-video-info";
@@ -496,6 +496,7 @@ function applyQuoteSettings() {
   $("quoteDrawerIntro").textContent = q.intro;
   $("quoteDrawerIntro").classList.toggle("hidden", !q.intro);
   $("customerNameLabel").classList.toggle("hidden", !q.showCustomer);
+  $("customerAddressFields").classList.toggle("hidden", !q.showAddress);
   $("customerNoteLabel").classList.toggle("hidden", !q.showNote);
   $("drawerSummary").classList.toggle("hidden", !q.showSummary);
   $("downloadPdf").classList.toggle("hidden", !q.showDownloadPdf);
@@ -1197,6 +1198,8 @@ function resetQuoteAfterFinalize() {
   quoteFinalizeId = "";
   save();
   if ($("customerName")) $("customerName").value = "";
+  if ($("customerCep")) $("customerCep").value = "";
+  if ($("customerAddress")) $("customerAddress").value = "";
   if ($("customerNote")) $("customerNote").value = "";
   render();
   renderItems();
@@ -1280,6 +1283,11 @@ function startCatalogAutoRefresh() {
   }, 7000);
 }
 
+function formatCepInput(value) {
+  const digits = String(value || "").replace(/\D/g, "").slice(0, 8);
+  return digits.length > 5 ? `${digits.slice(0,5)}-${digits.slice(5)}` : digits;
+}
+
 function quotePayload() {
   return {
     items: Object.entries(selected).map(([code, qty]) => {
@@ -1287,6 +1295,8 @@ function quotePayload() {
       return { code, qty: product ? normalizeQtyForProduct(qty, product) : clampQty(qty) };
     }),
     customer: quoteSettings().showCustomer ? $("customerName").value.trim() : "",
+    cep: quoteSettings().showAddress ? $("customerCep").value.trim() : "",
+    address: quoteSettings().showAddress ? $("customerAddress").value.trim() : "",
     note: quoteSettings().showNote ? $("customerNote").value.trim() : ""
   };
 }
@@ -1321,12 +1331,16 @@ function downloadBlob(blob, filename) {
 
 function whatsappMessage() {
   const customer = quoteSettings().showCustomer ? $("customerName").value.trim() : "";
+  const cep = quoteSettings().showAddress ? $("customerCep").value.trim() : "";
+  const address = quoteSettings().showAddress ? $("customerAddress").value.trim() : "";
   const note = quoteSettings().showNote ? $("customerNote").value.trim() : "";
   const lines = [
     customer
-      ? `Olá, Fruto Import! Sou ${customer}. Segue minha solicitação de orçamento em PDF.`
-      : "Olá, Fruto Import! Segue minha solicitação de orçamento em PDF."
+      ? `Olá, Fruto Importadora! Sou ${customer}. Segue minha solicitação de orçamento em PDF.`
+      : "Olá, Fruto Importadora! Segue minha solicitação de orçamento em PDF."
   ];
+  if (address) lines.push(`Endereço: ${address}${cep ? ` - CEP ${cep}` : ""}`);
+  else if (cep) lines.push(`CEP: ${cep}`);
   if (note) lines.push(`Observação: ${note}`);
   return lines.join("\n");
 }
@@ -1359,7 +1373,7 @@ async function sendPdf() {
     if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({
-          title: "Solicitação de orçamento - Fruto Import",
+          title: "Solicitação de orçamento - Fruto Importadora",
           text: shortMessage,
           files: [file]
         });
@@ -1486,6 +1500,13 @@ window.addEventListener("focus", () => {
   refreshCatalogNow({ silent: true });
   refreshSettingsNow();
 });
+
+if ($("customerCep")) {
+  $("customerCep").addEventListener("input", e => {
+    e.target.value = formatCepInput(e.target.value);
+  });
+}
+
 window.addEventListener("pageshow", event => {
   if (event.persisted) window.location.reload();
 });

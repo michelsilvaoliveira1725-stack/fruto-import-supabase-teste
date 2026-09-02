@@ -36,7 +36,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 @media(max-width:760px){.topbar{flex-wrap:wrap;padding:12px 14px;gap:10px}.brand-logo{flex:1}.brand-name{font-size:16px}.brand-mark{width:35px;height:35px}.quote-button{padding:10px 12px}.header-search{order:3;flex-basis:100%;max-width:none}.nav-inner{padding:6px 14px}.landing{padding:26px 14px 42px}.landing-copy{display:block}.landing-copy h1{font-size:29px}.catalog-status{text-align:left;margin-top:16px}.brand-choices{grid-template-columns:1fr}.brand-choice{min-height:355px}.benefits{grid-template-columns:1fr}.catalog-hero{padding:28px 16px}.catalog-wrap{padding:0 14px 44px}.product-grid{grid-template-columns:repeat(2,1fr);gap:10px}.product-pic{height:175px}.product-card h3{font-size:13px}.drawer{padding:18px}.admin-wrap{padding:0 12px 44px}.admin-heading{display:block}.admin-stats{margin-top:14px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.settings-row{grid-template-columns:1fr}.admin-table th:nth-child(3),.admin-table td:nth-child(3){display:none}}
 @media(max-width:420px){.brand-choice h2{font-size:31px}.brand-card-content{padding:25px 21px}.brand-card-art{opacity:.35}.product-pic{height:155px}.catalog-hero h1{font-size:31px}}
 
-/* ===== Fruto Import V3: homepage visual, quantity at product, editable homepage ===== */
+/* ===== Fruto Importadora V3: homepage visual, quantity at product, editable homepage ===== */
 .brand-choices-v3{align-items:stretch}.brand-showcase{display:flex;flex-direction:column;min-height:0;background:#fff!important}.brand-showcase:before{display:none}.brand-showcase-media{position:relative;aspect-ratio:16/9;background:#eef1f5;overflow:hidden;border-bottom:1px solid var(--line)}.brand-showcase-media:after{content:"";position:absolute;inset:auto 0 0;height:22%;background:linear-gradient(to top,rgba(8,16,34,.14),transparent);pointer-events:none}.brand-showcase-media img{display:block;width:100%;height:100%;object-fit:cover}.brand-card-content-v3{padding:24px 26px 26px;height:auto;flex:1}.brand-card-content-v3 .country-line{font-size:13px}.brand-card-content-v3 h2{font-size:31px;margin:8px 0 8px}.brand-card-content-v3 p{font-size:13px;font-style:normal;line-height:1.55;max-width:none}.brand-card-content-v3 .chips{margin-top:15px}.brand-card-content-v3 .brand-card-footer{padding-top:18px}.brand-showcase:hover .brand-showcase-media img{transform:scale(1.012)}.brand-showcase-media img{transition:transform .35s ease}
 
 .product-card.is-selected{border-color:#b9ddca;box-shadow:0 0 0 1px rgba(19,138,82,.08)}.product-qty-picker{display:grid;grid-template-columns:auto 36px minmax(52px,1fr) 36px;align-items:center;gap:6px;margin-top:12px}.product-qty-picker>span{font-size:11px;font-weight:800;color:#4c5666}.product-qty-picker button{height:36px;border:1px solid #d5dae3;background:#fff;color:var(--navy);border-radius:8px;font-size:18px;line-height:1;cursor:pointer}.product-qty-picker input{width:100%;height:36px;border:1px solid #d5dae3;border-radius:8px;text-align:center;font-weight:800;color:var(--navy);padding:0 4px;appearance:textfield;-moz-appearance:textfield}.product-qty-picker input::-webkit-outer-spin-button,.product-qty-picker input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}.product-select{margin-top:9px}.qty-static{gap:6px;background:#f6f8fb;border-radius:8px;padding:8px 10px;width:max-content}.qty-static span{font-size:11px;color:var(--muted)}.qty-static b{font-size:12px;color:var(--navy)}
@@ -46,7 +46,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 @media(max-width:980px){.brand-card-content-v3 h2{font-size:28px}.brand-admin-grid{grid-template-columns:1fr}.benefits-admin-grid{grid-template-columns:1fr}.three-fields{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:760px){.brand-showcase-media{aspect-ratio:16/10}.brand-card-content-v3{padding:20px}.brand-card-content-v3 h2{font-size:27px}.panel-title-row{display:block}.panel-title-row .primary{margin-top:12px}.three-fields{grid-template-columns:1fr}.product-qty-picker{grid-template-columns:auto 34px minmax(48px,1fr) 34px}.product-qty-picker button,.product-qty-picker input{height:34px}}
 
-/* ===== Fruto Import V4: preços, desconto opcional e totais no orçamento ===== */
+/* ===== Fruto Importadora V4: preços, desconto opcional e totais no orçamento ===== */
 .product-price{min-height:48px;margin-top:10px;display:flex;flex-direction:column;justify-content:center;gap:4px}.price-promo-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.price-old{text-decoration:line-through;color:#8b93a1;font-size:11px}.discount-badge{display:inline-flex;align-items:center;background:#eaf8ef;color:#08783f;border:1px solid #bde7cc;border-radius:999px;padding:3px 7px;font-size:10px;font-weight:900}.price-current{font-size:18px;line-height:1.1;color:var(--navy)}.price-current.promo{color:var(--green)}.price-consult{font-size:11px;font-weight:700;color:var(--muted)}.item-price{margin-top:8px;display:flex;flex-wrap:wrap;gap:7px 14px;background:#f8fafc;border:1px solid #edf0f3;border-radius:8px;padding:8px 10px;font-size:10px;color:var(--muted)}.item-price b{color:var(--navy)}.item-price small{width:100%;color:var(--green);font-weight:800}.switch-line{display:flex!important;align-items:center;gap:10px;cursor:pointer;width:max-content;max-width:100%}.switch-line input{position:absolute;opacity:0;pointer-events:none}.switch-ui{width:44px;height:24px;border-radius:999px;background:#cfd5de;position:relative;transition:.2s;flex:0 0 auto}.switch-ui:after{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);transition:.2s}.switch-line input:checked+.switch-ui{background:var(--green)}.switch-line input:checked+.switch-ui:after{transform:translateX(20px)}.switch-line input:focus-visible+.switch-ui{outline:3px solid rgba(8,57,184,.2)}.discount-control{padding:12px 14px;border:1px solid #e0e5eb;border-radius:10px;background:#fafbfc}.admin-price-cell{white-space:nowrap;font-size:11px}.admin-price-cell b{color:var(--green)}.admin-old-price{text-decoration:line-through;color:#8b93a1}
 @media(max-width:760px){.product-price{min-height:44px}.price-current{font-size:16px}.admin-table th:nth-child(4),.admin-table td:nth-child(4){display:none}}
 
@@ -65,7 +65,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
   .admin-section-nav{grid-template-columns:1fr;position:static;padding:0;background:transparent}.admin-section-tab{padding:12px}.admin-section-tab small{white-space:normal}.section-heading-block,.products-heading{display:block}.product-brand-tabs{justify-content:flex-start;margin-top:12px}.product-brand-tab{flex:1;min-width:92px;text-align:center}.compact-title-row{display:flex}.admin-step-badge{margin-top:0}.list-title-line{flex-wrap:wrap}.catalog-bar{align-items:stretch}.admin-search{max-width:none;width:100%}
 }
 
-/* ===== Fruto Import V6: séries por categoria + galeria de fotos ===== */
+/* ===== Fruto Importadora V6: séries por categoria + galeria de fotos ===== */
 .variation-filter,.series-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 12px;padding:12px 14px;background:#f7f9fc;border:1px solid #e3e8ef;border-radius:12px}.series-filter{margin-bottom:18px}.variation-filter-label,.series-filter-label{font-size:11px;font-weight:900;color:var(--navy);margin-right:2px}.variation-filter button,.series-filter button{border:1px solid #d7dde6;background:#fff;color:var(--navy);border-radius:999px;padding:8px 12px;font-size:11px;font-weight:800;cursor:pointer}.variation-filter button:hover,.series-filter button:hover{border-color:#aeb9c8}.variation-filter button.active,.series-filter button.active{background:var(--blue);border-color:var(--blue);color:#fff}
 .product-media{background:#fff;border-bottom:1px solid #edf0f4}.product-media .product-pic{border-bottom:0}.product-main-image{cursor:zoom-in}.product-thumbs{display:flex;gap:6px;padding:7px 8px 9px;overflow-x:auto;background:#fafbfc;border-top:1px solid #edf0f4;scrollbar-width:thin}.product-thumbs button{width:42px;height:42px;flex:0 0 42px;border:1px solid #d9dee6;background:#fff;border-radius:7px;padding:2px;cursor:pointer;overflow:hidden}.product-thumbs button.active{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}.product-thumbs img{width:100%;height:100%;object-fit:contain;display:block}.product-category{min-height:17px}
 .image-lightbox{position:fixed;inset:0;z-index:1000;background:rgba(4,9,20,.92);display:grid;grid-template-columns:70px minmax(0,1fr) 70px;align-items:center;padding:34px 24px}.image-lightbox.hidden{display:none}.lightbox-stage{grid-column:2;height:min(86vh,900px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}.lightbox-stage img{max-width:100%;max-height:calc(100% - 42px);object-fit:contain;border-radius:10px;background:#fff;box-shadow:0 20px 70px rgba(0,0,0,.4)}.lightbox-caption{color:#fff;font-size:12px;text-align:center;opacity:.88}.lightbox-close{position:absolute;right:18px;top:14px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:28px;cursor:pointer}.lightbox-nav{width:52px;height:70px;border:0;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;font-size:44px;cursor:pointer;justify-self:center}.lightbox-nav:hover,.lightbox-close:hover{background:rgba(255,255,255,.2)}
@@ -334,7 +334,7 @@ button,input,select,textarea{font:inherit}button{touch-action:manipulation}
 .raphael-card .brand-showcase-media img{object-fit:cover;background:#eef1f5;padding:0;}
 .catalog-hero.raphael{background-color:#171717;}
 
-/* ===== Fruto Import V17.3: logo editável, etiqueta posicionável e chips limpos ===== */
+/* ===== Fruto Importadora V17.3: logo editável, etiqueta posicionável e chips limpos ===== */
 .header-logo-image{display:block;width:auto;height:39px;max-width:150px;object-fit:contain;border-radius:8px}
 body[data-brand-label-position="center"] .product-pic .brand-mini{left:50%;right:auto;transform:translateX(-50%)}
 body[data-brand-label-position="right"] .product-pic .brand-mini{left:auto;right:9px;transform:none}
@@ -436,4 +436,19 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
     padding:10px 8px;
     font-size:12px;
   }
+}
+
+
+/* ===== V17.6: endereço opcional + banners padronizados nas três marcas ===== */
+.customer-address-fields{
+  display:grid;
+  grid-template-columns:130px minmax(0,1fr);
+  gap:10px;
+}
+.catalog-hero.has-catalog-banner{
+  background-position:center center!important;
+  background-size:cover!important;
+}
+@media(max-width:760px){
+  .customer-address-fields{grid-template-columns:1fr}
 }

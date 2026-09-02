@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0b1736">
-  <title>Admin | Fruto Import</title>
+  <title>Admin | Fruto Importadora</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/styles.css">
   <script>
@@ -26,7 +26,7 @@
 <body class="admin-body">
 <header class="admin-header">
   <div class="topbar">
-    <div class="brand-logo" aria-label="Fruto Import">
+    <div class="brand-logo" aria-label="Fruto Importadora">
       <span class="brand-mark">F</span><span class="brand-name">FRUTO <b>IMPORT</b></span>
     </div>
     <a href="/" class="secondary" style="text-decoration:none">Ver catálogo</a>
@@ -35,7 +35,7 @@
 <main class="admin-wrap">
   <section id="authBox" class="login-card">
     <span class="eyebrow">ÁREA RESTRITA</span>
-    <h1>Painel Fruto Import</h1>
+    <h1>Painel Fruto Importadora</h1>
     <p class="muted" id="authIntro">Carregando...</p>
     <div id="authNotice" class="notice hidden"></div>
     <div id="setupFields" class="hidden">
@@ -60,7 +60,7 @@
 
   <section id="dashboard" class="hidden">
     <div class="admin-heading">
-      <div><span class="eyebrow">PAINEL ADMINISTRATIVO</span><h1>Catálogo Fruto Import</h1><span class="muted">Painel organizado por área para facilitar o cadastro e a manutenção do catálogo.</span></div>
+      <div><span class="eyebrow">PAINEL ADMINISTRATIVO</span><h1>Catálogo Fruto Importadora</h1><span class="muted">Painel organizado por área para facilitar o cadastro e a manutenção do catálogo.</span></div>
       <div class="admin-stats">
         <div class="stat"><b id="statSennelier">0</b><span>Sennelier / 2.000</span></div>
         <div class="stat"><b id="statSchmincke">0</b><span>Schmincke / 2.000</span></div>
@@ -110,7 +110,7 @@
       <div class="section-heading-block"><span class="eyebrow">ATENDIMENTO</span><h2>Configuração de atendimento</h2></div>
       <p class="muted small">Configure o WhatsApp e também escolha o que o cliente verá na área de orçamento, no PDF e no resumo enviado pelo WhatsApp.</p>
       <div class="settings-row">
-        <div class="field"><label>WhatsApp da Fruto Import</label><input id="whatsapp" inputmode="numeric" maxlength="15" placeholder="5511996576368"></div>
+        <div class="field"><label>WhatsApp da Fruto Importadora</label><input id="whatsapp" inputmode="numeric" maxlength="15" placeholder="5511996576368"></div>
         <button class="primary" id="saveSettings">Salvar atendimento</button>
       </div>
       <div class="admin-subpanel" style="margin-top:18px">
@@ -131,6 +131,7 @@
         </div>
         <div class="option-grid">
           <label><input type="checkbox" id="quoteShowCustomer"> Campo nome / empresa</label>
+          <label><input type="checkbox" id="quoteShowAddress"> Campo endereço + CEP</label>
           <label><input type="checkbox" id="quoteShowNote"> Campo observação</label>
           <label><input type="checkbox" id="quoteShowSummary"> Resumo de quantidades</label>
           <label><input type="checkbox" id="quoteShowGrandTotal"> Total estimado</label>
@@ -139,10 +140,10 @@
         </div>
         <h3 class="mini-heading">Cabeçalho e rodapé do PDF</h3>
         <div class="form-grid">
-          <div class="field"><label>Nome no topo do PDF</label><input id="pdfHeaderTitleAdmin" maxlength="80" placeholder="FRUTO IMPORT"></div>
+          <div class="field"><label>Nome no topo do PDF</label><input id="pdfHeaderTitleAdmin" maxlength="80" placeholder="FRUTO IMPORTADORA"></div>
           <div class="field"><label>Subtítulo do PDF</label><input id="pdfHeaderSubtitleAdmin" maxlength="100" placeholder="Solicitação de Orçamento"></div>
-          <div class="field"><label>Texto antes do WhatsApp</label><input id="pdfContactLabelAdmin" maxlength="80" placeholder="WhatsApp Fruto Import"></div>
-          <div class="field"><label>Texto do rodapé</label><input id="pdfFooterTextAdmin" maxlength="80" placeholder="Fruto Import"></div>
+          <div class="field"><label>Texto antes do WhatsApp</label><input id="pdfContactLabelAdmin" maxlength="80" placeholder="WhatsApp Fruto Importadora"></div>
+          <div class="field"><label>Texto do rodapé</label><input id="pdfFooterTextAdmin" maxlength="80" placeholder="Fruto Importadora"></div>
         </div>
         <h3 class="mini-heading">Colunas do orçamento</h3>
         <div class="option-grid quote-columns-admin">
@@ -212,7 +213,7 @@
           <label class="switch-line"><input type="checkbox" id="headerShowBrandNameAdmin"><span class="switch-ui" aria-hidden="true"></span><b>Mostrar nome ao lado da logo</b></label>
         </div>
         <div class="form-grid header-admin-grid">
-          <div class="field"><label>Nome ao lado da logo</label><input id="headerBrandNameAdmin" maxlength="40" placeholder="FRUTO IMPORT"></div>
+          <div class="field"><label>Nome ao lado da logo</label><input id="headerBrandNameAdmin" maxlength="40" placeholder="FRUTO IMPORTADORA"></div>
           <div class="field"><label>Texto do botão Início</label><input id="headerHomeLabelAdmin" maxlength="30" placeholder="Início"></div>
           <div class="field"><label>Texto do botão Sennelier</label><input id="headerSennelierLabelAdmin" maxlength="30" placeholder="Sennelier"></div>
           <div class="field"><label>Texto do botão Schmincke</label><input id="headerSchminckeLabelAdmin" maxlength="30" placeholder="Schmincke"></div>

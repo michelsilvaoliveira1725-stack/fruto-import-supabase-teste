@@ -6,7 +6,7 @@ const DEFAULT_HOME = {
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORT",
+    brandName: "FRUTO IMPORTADORA",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -14,13 +14,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Import." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -44,7 +44,7 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
+    catalogImage: "/assets/banner-schmincke-v17-6.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },
@@ -52,7 +52,7 @@ const DEFAULT_HOME = {
     kicker: "Raphaël 🇫🇷", title: "RAPHAËL",
     description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
     chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França",
-    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "/assets/banner-raphael-v17-6.jpg",
     catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   },
   videos: {
@@ -67,8 +67,8 @@ const DEFAULT_HOME = {
 };
 const DEFAULT_QUOTE = {
   title: "Minha solicitação", intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORT", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Import", pdfFooterText: "Fruto Import",
-  showCustomer: true, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
+  pdfHeaderTitle: "FRUTO IMPORTADORA", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Importadora", pdfFooterText: "Fruto Importadora",
+  showCustomer: true, showAddress: false, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
   columns: { product: true, code: true, series: false, salePack: false, quantity: true, unitPrice: true, subtotal: false }
 };
 
@@ -104,7 +104,7 @@ function productCodeKey(value) {
 let removedImages = [];
 let removedVideoThumbs = [];
 const MAX_PRODUCT_IMAGES = 10;
-let currentSettings = { businessName: "Fruto Import", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
+let currentSettings = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 
 function notice(id, msg, type = "") {
   const el = $(id);
@@ -424,6 +424,7 @@ function fillQuoteForm(raw) {
   $("pdfContactLabelAdmin").value = q.pdfContactLabel;
   $("pdfFooterTextAdmin").value = q.pdfFooterText;
   $("quoteShowCustomer").checked = q.showCustomer;
+  $("quoteShowAddress").checked = q.showAddress;
   $("quoteShowNote").checked = q.showNote;
   $("quoteShowSummary").checked = q.showSummary;
   $("quoteShowGrandTotal").checked = q.showGrandTotal;
@@ -441,6 +442,7 @@ function quotePayloadAdmin() {
     pdfContactLabel: $("pdfContactLabelAdmin").value,
     pdfFooterText: $("pdfFooterTextAdmin").value,
     showCustomer: $("quoteShowCustomer").checked,
+    showAddress: $("quoteShowAddress").checked,
     showNote: $("quoteShowNote").checked,
     showSummary: $("quoteShowSummary").checked,
     showGrandTotal: $("quoteShowGrandTotal").checked,
