@@ -5,13 +5,13 @@ const STORE = "fruto-import-settings";
 const KEY = "public";
 
 const DEFAULT_HOME = {
-  bannerRevision: 174,
+  bannerRevision: 176,
   header: {
     showLogo: true,
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORT",
+    brandName: "FRUTO IMPORTADORA",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -19,13 +19,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORT",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Import." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -49,13 +49,13 @@ const DEFAULT_HOME = {
     chip3: "Aero Color",
     button: "Ver Catálogo Schmincke →",
     image: "/assets/hero-schmincke.webp",
-    catalogImage: "/assets/banner-schmincke-v17-4.jpg",
+    catalogImage: "/assets/banner-schmincke-v17-6.jpg",
     catalogTitle: "Catálogo Schmincke",
     catalogSubtitle: "Materiais artísticos de excelência alemã — selecione os produtos e monte sua solicitação de orçamento."
   },
   raphael: {
     kicker: "Raphaël 🇫🇷", title: "RAPHAËL", description: "Pincéis franceses para artistas, com linhas profissionais para diferentes técnicas e estilos.",
-    chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França", button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "",
+    chip1: "Pincéis profissionais", chip2: "Belas-Artes", chip3: "França", button: "Ver Catálogo Raphaël →", image: "/assets/hero-raphael.png", catalogImage: "/assets/banner-raphael-v17-6.jpg",
     catalogTitle: "Catálogo Raphaël", catalogSubtitle: "Pincéis Raphaël para artistas — selecione os produtos e monte sua solicitação de orçamento."
   }
 };
@@ -63,11 +63,12 @@ const DEFAULT_HOME = {
 const DEFAULT_QUOTE = {
   title: "Minha solicitação",
   intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORT",
+  pdfHeaderTitle: "FRUTO IMPORTADORA",
   pdfHeaderSubtitle: "Solicitação de Orçamento",
-  pdfContactLabel: "WhatsApp Fruto Import",
-  pdfFooterText: "Fruto Import",
+  pdfContactLabel: "WhatsApp Fruto Importadora",
+  pdfFooterText: "Fruto Importadora",
   showCustomer: true,
+  showAddress: false,
   showNote: true,
   showSummary: true,
   showGrandTotal: true,
@@ -86,7 +87,7 @@ const DEFAULT_VIDEOS = {
   items: Array.from({ length: 4 }, () => ({ enabled: false, tag: "Novidade", title: "", subtitle: "", duration: "", url: "", thumbnail: "" }))
 };
 
-const DEFAULTS = { businessName: "Fruto Import", whatsapp: "5511996576368", home: { ...DEFAULT_HOME, videos: DEFAULT_VIDEOS }, quote: DEFAULT_QUOTE };
+const DEFAULTS = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: { ...DEFAULT_HOME, videos: DEFAULT_VIDEOS }, quote: DEFAULT_QUOTE };
 
 function clean(value, max = 360) {
   return String(value ?? "").trim().slice(0, max);
@@ -171,6 +172,7 @@ function normalizeQuote(raw, fallback = DEFAULT_QUOTE) {
     pdfContactLabel: valueOr(source, "pdfContactLabel", fallback.pdfContactLabel, 80),
     pdfFooterText: valueOr(source, "pdfFooterText", fallback.pdfFooterText, 80),
     showCustomer: boolOr(source, "showCustomer", fallback.showCustomer),
+    showAddress: boolOr(source, "showAddress", fallback.showAddress),
     showNote: boolOr(source, "showNote", fallback.showNote),
     showSummary: boolOr(source, "showSummary", fallback.showSummary),
     showGrandTotal: boolOr(source, "showGrandTotal", fallback.showGrandTotal),
@@ -221,7 +223,7 @@ function normalizeHome(raw, fallback = DEFAULTS.home) {
 function normalizeStored(current) {
   const source = current && typeof current === "object" ? current : {};
   return {
-    businessName: "Fruto Import",
+    businessName: "Fruto Importadora",
     whatsapp: cleanPhone(source.whatsapp || DEFAULTS.whatsapp) || DEFAULTS.whatsapp,
     home: normalizeHome(source.home, DEFAULTS.home),
     quote: normalizeQuote(source.quote, DEFAULT_QUOTE)
@@ -234,12 +236,30 @@ async function readSettings() {
   const settings = normalizeStored(current);
   const storedRevision = Number(current?.home?.bannerRevision || 0);
 
-  // V17.4: aplica uma única vez os novos banners enviados pelo usuário.
-  // Depois da migração, qualquer troca feita pelo ADM continua sendo preservada normalmente.
-  if (storedRevision < 174) {
-    settings.home.bannerRevision = 174;
+  // V17.6: aplica uma única vez os banners padronizados das três marcas.
+  // Depois desta migração, novas trocas feitas pelo ADM continuam sendo preservadas normalmente.
+  if (storedRevision < 176) {
+    settings.home.bannerRevision = 176;
     settings.home.sennelier.catalogImage = DEFAULT_HOME.sennelier.catalogImage;
     settings.home.schmincke.catalogImage = DEFAULT_HOME.schmincke.catalogImage;
+    settings.home.raphael.catalogImage = DEFAULT_HOME.raphael.catalogImage;
+
+    const brandText = value => String(value || "")
+      .replace(/FRUTO IMPORT(?!ADORA)/g, "FRUTO IMPORTADORA")
+      .replace(/Fruto Import(?!adora)/g, "Fruto Importadora");
+
+    settings.home.header.brandName = brandText(settings.home.header.brandName);
+    settings.home.eyebrow = brandText(settings.home.eyebrow);
+    settings.home.benefits = settings.home.benefits.map(item => ({
+      ...item,
+      title: brandText(item.title),
+      text: brandText(item.text)
+    }));
+    settings.quote.pdfHeaderTitle = brandText(settings.quote.pdfHeaderTitle);
+    settings.quote.pdfContactLabel = brandText(settings.quote.pdfContactLabel);
+    settings.quote.pdfFooterText = brandText(settings.quote.pdfFooterText);
+    settings.businessName = "Fruto Importadora";
+
     await store.setJSON(KEY, settings);
   }
   return settings;
@@ -268,7 +288,7 @@ export default async (req) => {
     : current.home;
 
   const quote = body.quote && typeof body.quote === "object" ? normalizeQuote(body.quote, current.quote) : current.quote;
-  const settings = { businessName: "Fruto Import", whatsapp, home, quote };
+  const settings = { businessName: "Fruto Importadora", whatsapp, home, quote };
   await getStore(STORE).setJSON(KEY, settings);
   return json({ ok: true, ...settings });
 };

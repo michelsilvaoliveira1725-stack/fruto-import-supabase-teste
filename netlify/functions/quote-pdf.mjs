@@ -113,11 +113,12 @@ function normalizeQty(value, product) {
 }
 
 const DEFAULT_QUOTE = {
-  pdfHeaderTitle:"FRUTO IMPORT",
+  pdfHeaderTitle:"FRUTO IMPORTADORA",
   pdfHeaderSubtitle:"Solicitação de Orçamento",
-  pdfContactLabel:"WhatsApp Fruto Import",
-  pdfFooterText:"Fruto Import",
+  pdfContactLabel:"WhatsApp Fruto Importadora",
+  pdfFooterText:"Fruto Importadora",
   showCustomer:true,
+  showAddress:false,
   showNote:true,
   showSummary:true,
   showGrandTotal:true,
@@ -158,7 +159,7 @@ export default async (req) => {
   }
 
   const settings = await getStore(SETTINGS_STORE).get(SETTINGS_KEY, { type: "json", consistency: "strong" }) || {
-    businessName: "Fruto Import",
+    businessName: "Fruto Importadora",
     whatsapp: "5511996576368"
   };
 
@@ -187,6 +188,8 @@ export default async (req) => {
   if (!items.length) return json({ error: "Os produtos selecionados não estão mais disponíveis." }, 409);
 
   const customer = clean(body.customer, 100);
+  const cep = clean(body.cep, 12);
+  const address = clean(body.address, 180);
   const note = clean(body.note, 280);
 
   const pdf = await PDFDocument.create();
@@ -207,7 +210,7 @@ export default async (req) => {
     page = pdf.addPage(pageSize);
     const { width, height } = page.getSize();
     page.drawRectangle({ x: 0, y: height - 94, width, height: 94, color: navy });
-    page.drawText(safePdfText(q.pdfHeaderTitle || "FRUTO IMPORT"), { x: margin, y: height - 50, size: 22, font: bold, color: white });
+    page.drawText(safePdfText(q.pdfHeaderTitle || "FRUTO IMPORTADORA"), { x: margin, y: height - 50, size: 22, font: bold, color: white });
     page.drawText(safePdfText(q.pdfHeaderSubtitle || "Solicitacao de Orcamento"), { x: margin, y: height - 73, size: 11, font: regular, color: white });
     y = height - 122;
   }
@@ -224,6 +227,16 @@ export default async (req) => {
   if (q.showCustomer && customer) {
     page.drawText(safePdfText(`Cliente: ${customer}`), { x: margin, y, size: 10, font: bold, color: navy });
     y -= 20;
+  }
+
+  if (q.showAddress && (address || cep)) {
+    const addressLine = address ? `Endereco: ${address}${cep ? ` | CEP: ${cep}` : ""}` : `CEP: ${cep}`;
+    const lines = wrapText(addressLine, regular, 9, 505);
+    for (const line of lines) {
+      page.drawText(safePdfText(line), { x: margin, y, size: 9, font: regular, color: gray });
+      y -= 13;
+    }
+    y -= 5;
   }
 
   if (q.showNote && note) {
@@ -362,12 +375,12 @@ export default async (req) => {
 
   const phone = String(settings.whatsapp || "");
   if (phone) {
-    page.drawText(safePdfText(`${q.pdfContactLabel || "WhatsApp Fruto Import"}: +${phone}`), { x: margin, y, size: 9, font: regular, color: gray });
+    page.drawText(safePdfText(`${q.pdfContactLabel || "WhatsApp Fruto Importadora"}: +${phone}`), { x: margin, y, size: 9, font: regular, color: gray });
   }
 
   const pages = pdf.getPages();
   pages.forEach((p, i) => {
-    p.drawText(safePdfText(`${q.pdfFooterText || "Fruto Import"}  |  Pagina ${i + 1} de ${pages.length}`), { x: margin, y: 26, size: 8, font: regular, color: gray });
+    p.drawText(safePdfText(`${q.pdfFooterText || "Fruto Importadora"}  |  Pagina ${i + 1} de ${pages.length}`), { x: margin, y: 26, size: 8, font: regular, color: gray });
   });
 
   const bytes = await pdf.save();
