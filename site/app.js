@@ -1009,15 +1009,8 @@ function render() {
     const cat = document.createElement("div");
     cat.className = "product-category";
     const customDisplayText = String(p.displayText || "").trim();
-    if (customDisplayText) {
-      cat.textContent = customDisplayText;
-    } else {
-      const categoryParts = [p.cat];
-      if (variationValue(p.variation)) categoryParts.push(variationValue(p.variation));
-      if (p.series) categoryParts.push(seriesLabel(p.series));
-      if (salePack(p) > 1) categoryParts.push(salePackLabel(p));
-      cat.textContent = categoryParts.join(" · ");
-    }
+    cat.textContent = customDisplayText;
+    cat.classList.toggle("hidden", !customDisplayText);
     const price = priceBlock(p);
     const boxInfo = boxSaleInfo(p);
     if (!isAvailable(p)) {
