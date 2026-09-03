@@ -857,6 +857,7 @@ function resetForm() {
   $("variation").value = "";
   $("series").value = "";
   $("shortDescription").value = "";
+  $("displayText").value = "";
   $("salePack").value = "1";
   $("available").value = "true";
   $("stockControl").checked = false;
@@ -885,6 +886,7 @@ function editProduct(code) {
   $("variation").value = p.variation || "";
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
+  $("displayText").value = p.displayText || "";
   $("salePack").value = String(salePackValue(p.salePack));
   $("available").value = p.available === false ? "false" : "true";
   $("stockControl").checked = stockControlEnabled(p);
@@ -914,6 +916,7 @@ function fillDuplicateForm(p, message = true) {
   $("variation").value = p.variation || "";
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
+  $("displayText").value = p.displayText || "";
   $("salePack").value = String(salePackValue(p.salePack));
   $("available").value = p.available === false ? "false" : "true";
   $("stockControl").checked = stockControlEnabled(p);
@@ -1161,6 +1164,7 @@ async function saveProduct(e) {
       variation: $("variation").value,
       series: $("series").value,
       shortDescription: $("shortDescription").value,
+      displayText: $("displayText").value,
       available: $("available").value === "true",
       stockControl: $("stockControl").checked,
       stockQuantity: $("stockControl").checked ? stockQuantityValue($("stockQuantity").value) : 0,
@@ -1173,6 +1177,7 @@ async function saveProduct(e) {
     };
     if (original) await api(`/api/products/${encodeURIComponent(original)}`, { method: "PUT", json: payload });
     else await api("/api/products", { method: "POST", json: payload });
+    await api("/api/product-display-text", { method: "POST", json: { code: payload.code, displayText: payload.displayText } });
 
     const keep = new Set(images);
     for (const url of removedImages) if (!keep.has(url)) deleteUploadedImage(url).catch(() => {});

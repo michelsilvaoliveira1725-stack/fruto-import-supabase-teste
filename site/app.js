@@ -954,11 +954,16 @@ function render() {
     h.textContent = p.name;
     const cat = document.createElement("div");
     cat.className = "product-category";
-    const categoryParts = [p.cat];
-    if (variationValue(p.variation)) categoryParts.push(variationValue(p.variation));
-    if (p.series) categoryParts.push(seriesLabel(p.series));
-    if (salePack(p) > 1) categoryParts.push(salePackLabel(p));
-    cat.textContent = categoryParts.join(" · ");
+    const customDisplayText = String(p.displayText || "").trim();
+    if (customDisplayText) {
+      cat.textContent = customDisplayText;
+    } else {
+      const categoryParts = [p.cat];
+      if (variationValue(p.variation)) categoryParts.push(variationValue(p.variation));
+      if (p.series) categoryParts.push(seriesLabel(p.series));
+      if (salePack(p) > 1) categoryParts.push(salePackLabel(p));
+      cat.textContent = categoryParts.join(" · ");
+    }
     const price = priceBlock(p);
     if (!isAvailable(p)) {
       const sold = document.createElement("span"); sold.className = "catalog-soldout-badge"; sold.textContent = "Esgotado"; body.appendChild(sold);
