@@ -105,6 +105,7 @@ let removedImages = [];
 let removedVideoThumbs = [];
 const MAX_PRODUCT_IMAGES = 10;
 let currentSettings = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
+let quoteRequests = [];
 
 function notice(id, msg, type = "") {
   const el = $(id);
@@ -275,7 +276,7 @@ function showAuth() {
 }
 
 function setAdminSection(sectionId, persist = true) {
-  const allowed = new Set(["overviewSection", "productsSection", "homepageSection", "serviceSection"]);
+  const allowed = new Set(["overviewSection", "productsSection", "homepageSection", "quotesSection", "serviceSection"]);
   const target = allowed.has(sectionId) ? sectionId : "productsSection";
   activeAdminSection = target;
   document.querySelectorAll(".admin-section").forEach(section => {
@@ -288,6 +289,7 @@ document.querySelectorAll(".admin-section-tab").forEach(button => {
     button.setAttribute("aria-selected", active ? "true" : "false");
   });
   if (persist) localStorage.setItem("fruto_import_admin_section", target);
+  if (target === "quotesSection" && token) loadQuoteRequests();
 }
 
 function setProductBrandFilter(brand) {
@@ -1518,6 +1520,77 @@ async function saveOrganize() {
     notice("mainNotice",`${list.length} produto(s) reorganizados com sucesso.`,"success");
   } catch(e){ notice("mainNotice",e.message,"error"); } finally { btn.disabled=false; }
 }
+
+function formatQuoteDate(value) {
+  try { return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value)); }
+  catch { return String(value || ""); }
+}
+
+function renderQuoteRequests() {
+  const rows = $("quoteChecklistRows");
+  if (!rows) return;
+  rows.textContent = "";
+  $("quoteChecklistTotal").textContent = String(quoteRequests.length);
+  $("quoteChecklistNew").textContent = String(quoteRequests.filter(q => !q.checked).length);
+  if (!quoteRequests.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 5; td.className = "muted"; td.textContent = "Nenhum orçamento finalizado ainda.";
+    tr.appendChild(td); rows.appendChild(tr); return;
+  }
+  quoteRequests.forEach(q => {
+    const tr = document.createElement("tr");
+    tr.classList.toggle("quote-checked-row", q.checked === true);
+
+    const checkTd = document.createElement("td");
+    const label = document.createElement("label");
+    label.className = "quote-check-label";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = q.checked === true;
+    const text = document.createElement("span"); text.textContent = cb.checked ? "Conferido" : "Novo";
+    cb.addEventListener("change", async () => {
+      cb.disabled = true;
+      try {
+        await api("/api/quote-requests", { method: "PATCH", json: { quoteId: q.quote_id, checked: cb.checked } });
+        q.checked = cb.checked; text.textContent = cb.checked ? "Conferido" : "Novo";
+        tr.classList.toggle("quote-checked-row", cb.checked);
+        $("quoteChecklistNew").textContent = String(quoteRequests.filter(row => !row.checked).length);
+      } catch (e) { cb.checked = !cb.checked; notice("quoteChecklistNotice", e.message, "error"); }
+      finally { cb.disabled = false; }
+    });
+    label.append(cb, text); checkTd.appendChild(label);
+
+    const dateTd = document.createElement("td"); dateTd.textContent = formatQuoteDate(q.created_at);
+    const customerTd = document.createElement("td");
+    const customer = document.createElement("b"); customer.textContent = q.customer_name || "Cliente não informado";
+    customerTd.appendChild(customer);
+    if (q.cep || q.address) { const small=document.createElement("small"); small.className="quote-client-detail"; small.textContent=[q.address,q.cep?`CEP ${q.cep}`:""].filter(Boolean).join(" · "); customerTd.appendChild(small); }
+    const itemsTd = document.createElement("td"); itemsTd.textContent = String(q.item_count || 0);
+    const pdfTd = document.createElement("td");
+    const btn = document.createElement("button"); btn.type="button"; btn.className="secondary small-button"; btn.textContent="Abrir PDF";
+    btn.addEventListener("click", async () => {
+      btn.disabled=true;
+      try { const d=await api(`/api/quote-requests?quoteId=${encodeURIComponent(q.quote_id)}`); if(d.url) window.open(d.url,"_blank","noopener"); }
+      catch(e){ notice("quoteChecklistNotice", e.message, "error"); } finally { btn.disabled=false; }
+    });
+    pdfTd.appendChild(btn);
+    tr.append(checkTd,dateTd,customerTd,itemsTd,pdfTd); rows.appendChild(tr);
+  });
+}
+
+async function loadQuoteRequests() {
+  const rows = $("quoteChecklistRows");
+  if (!rows) return;
+  try {
+    notice("quoteChecklistNotice", "");
+    const d = await api("/api/quote-requests");
+    quoteRequests = Array.isArray(d.quotes) ? d.quotes : [];
+    renderQuoteRequests();
+  } catch (e) {
+    notice("quoteChecklistNotice", e.message, "error");
+  }
+}
+
 function clearCatalogHero(brand) {
   const key=brand==="Sennelier"?"sennelier":brand==="Schmincke"?"schmincke":"raphael"; const prefix=key==="sennelier"?"Sennelier":key==="schmincke"?"Schmincke":"Raphael"; const cur=$(`current${prefix}CatalogHero`); const input=$(`${key}CatalogHeroFile`); const preview=$(`${key}CatalogHeroPreview`);
   cur.value=""; input.value=""; preview.src=""; preview.classList.add("hidden"); notice("mainNotice",`Imagem do catálogo ${brand} removida da prévia. Clique em Salvar página inicial para confirmar.`,"");
@@ -1647,3 +1720,5 @@ $("bulkPreviewBtn")?.addEventListener("click", previewBulkPrice);
 $("bulkSaveBtn")?.addEventListener("click", saveBulkPrice);
 
 $("bulkPriceState")?.addEventListener("change", () => $("bulkPreviewBox")?.classList.add("hidden"));
+
+$("refreshQuotesBtn")?.addEventListener("click", loadQuoteRequests);

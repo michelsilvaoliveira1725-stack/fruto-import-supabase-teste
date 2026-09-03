@@ -81,6 +81,9 @@
       <button type="button" class="admin-section-tab" data-admin-section="homepageSection">
         <span class="admin-tab-icon">✦</span><span><b>Página inicial</b><small>Imagens, textos e destaques</small></span>
       </button>
+      <button type="button" class="admin-section-tab" data-admin-section="quotesSection">
+        <span class="admin-tab-icon">✓</span><span><b>Orçamentos</b><small>Clientes que finalizaram</small></span>
+      </button>
       <button type="button" class="admin-section-tab" data-admin-section="serviceSection">
         <span class="admin-tab-icon">◉</span><span><b>Atendimento</b><small>WhatsApp do orçamento</small></span>
       </button>
@@ -105,6 +108,29 @@
           </div>
         </div>
       </section>
+
+
+    <section class="panel admin-section hidden" id="quotesSection">
+      <div class="panel-title-row compact-row">
+        <div>
+          <span class="eyebrow">ORÇAMENTOS</span>
+          <h2>Clientes que finalizaram</h2>
+          <p class="muted small">Aqui aparecem somente os clientes que finalizaram o orçamento e geraram a cópia em PDF. Use como um checklist simples de interessados.</p>
+        </div>
+        <button class="secondary" type="button" id="refreshQuotesBtn">Atualizar lista</button>
+      </div>
+      <div class="quote-checklist-summary">
+        <span><b id="quoteChecklistTotal">0</b> orçamento(s)</span>
+        <span><b id="quoteChecklistNew">0</b> novo(s)</span>
+      </div>
+      <div id="quoteChecklistNotice" class="notice hidden"></div>
+      <div class="admin-list quote-checklist-list">
+        <table class="admin-table quote-checklist-table">
+          <thead><tr><th>Check</th><th>Data</th><th>Cliente</th><th>Itens</th><th>PDF</th></tr></thead>
+          <tbody id="quoteChecklistRows"><tr><td colspan="5" class="muted">Nenhum orçamento finalizado ainda.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
 
     <section class="panel admin-section hidden" id="serviceSection">
       <div class="section-heading-block"><span class="eyebrow">ATENDIMENTO</span><h2>Configuração de atendimento</h2></div>

@@ -452,3 +452,16 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
 @media(max-width:760px){
   .customer-address-fields{grid-template-columns:1fr}
 }
+
+/* ===== V17.7: checklist simples de orçamentos finalizados ===== */
+.quote-checklist-summary{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 16px}
+.quote-checklist-summary span{display:inline-flex;align-items:center;gap:5px;padding:8px 11px;border:1px solid #e1e7ef;border-radius:999px;background:#f8fafc;color:#64748b;font-size:11px}
+.quote-checklist-summary b{color:var(--navy);font-size:13px}
+.quote-check-label{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;color:#9a3412;white-space:nowrap}
+.quote-check-label input{width:16px;height:16px;accent-color:var(--green)}
+.quote-checked-row{opacity:.62;background:#f8fafc}
+.quote-checked-row .quote-check-label{color:var(--green)}
+.quote-client-detail{display:block;margin-top:4px;color:var(--muted);font-size:10px;line-height:1.35;max-width:360px}
+.quote-checklist-list{max-height:620px}
+.quote-checklist-table td:nth-child(3){min-width:220px}
+@media(max-width:760px){.quote-checklist-table th:nth-child(4),.quote-checklist-table td:nth-child(4){display:none}.quote-checklist-table td:nth-child(3){min-width:170px}}

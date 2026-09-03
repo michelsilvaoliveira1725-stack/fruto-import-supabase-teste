@@ -1318,6 +1318,47 @@ async function generatePdfBlob() {
   return await r.blob();
 }
 
+
+async function blobToBase64(blob) {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function quoteTotalEstimated() {
+  return Object.entries(selected).reduce((sum, [code, qty]) => {
+    const product = products.find(p => p.code === code);
+    if (!product) return sum;
+    const price = finalPrice(product);
+    return price === null ? sum : sum + price * normalizeQtyForProduct(qty, product);
+  }, 0);
+}
+
+async function saveFinalizedQuote(blob) {
+  const payload = quotePayload();
+  const pdfBase64 = await blobToBase64(blob);
+  const r = await fetch("/api/quote-requests", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      quoteId: createQuoteId(),
+      ...payload,
+      totalEstimated: quoteTotalEstimated(),
+      pdfBase64
+    }),
+    cache: "no-store"
+  });
+  let data = {};
+  try { data = await r.json(); } catch {}
+  if (!r.ok) throw new Error(data.error || "O orçamento foi finalizado, mas não foi possível guardar a cópia no atendimento.");
+  return data;
+}
+
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -1364,7 +1405,7 @@ async function sendPdf() {
 
   try {
     const blob = await generatePdfBlob();
-    const filename = `fruto-import-orcamento-${new Date().toISOString().slice(0,10)}.pdf`;
+    const filename = `fruto-importadora-orcamento-${new Date().toISOString().slice(0,10)}.pdf`;
     const file = new File([blob], filename, { type: "application/pdf" });
     const shortMessage = whatsappMessage();
 
@@ -1378,6 +1419,7 @@ async function sendPdf() {
           files: [file]
         });
         await finalizeQuoteStock();
+        await saveFinalizedQuote(blob);
         resetQuoteAfterFinalize();
         toast("Solicitação finalizada. Um novo orçamento já pode ser iniciado.");
         return;
@@ -1394,6 +1436,7 @@ async function sendPdf() {
 
     // Modo compatível: confirma o estoque, baixa o PDF e abre o WhatsApp apenas com mensagem curta.
     await finalizeQuoteStock();
+    await saveFinalizedQuote(blob);
     downloadBlob(blob, filename);
     const wa = whatsappUrl();
     if (wa) {
@@ -1420,7 +1463,8 @@ async function downloadPdf() {
   try {
     const blob = await generatePdfBlob();
     await finalizeQuoteStock();
-    downloadBlob(blob, `fruto-import-orcamento-${new Date().toISOString().slice(0,10)}.pdf`);
+    await saveFinalizedQuote(blob);
+    downloadBlob(blob, `fruto-importadora-orcamento-${new Date().toISOString().slice(0,10)}.pdf`);
     resetQuoteAfterFinalize();
     toast("PDF gerado. O orçamento foi limpo para uma nova solicitação.");
   } catch (err) {
