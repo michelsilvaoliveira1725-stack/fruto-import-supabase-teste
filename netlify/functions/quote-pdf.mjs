@@ -82,8 +82,8 @@ function money(value) {
 }
 
 function salePack(product) {
-  const pack = Number(product?.salePack);
-  return pack === 5 ? 5 : pack === 4 ? 4 : pack === 3 ? 3 : 1;
+  const pack = Number.parseInt(product?.salePack, 10);
+  return Number.isFinite(pack) && pack >= 2 && pack <= 100 ? pack : 1;
 }
 
 function stockControlEnabled(product) { return product?.stockControl === true; }
@@ -137,7 +137,7 @@ function seriesLabel(value) {
 
 function salePackLabel(product) {
   const pack = salePack(product);
-  return pack === 1 ? "Unitario" : `Fechado com ${pack}`;
+  return pack === 1 ? "Unitario" : `Caixa com ${pack}`;
 }
 
 export default async (req) => {
