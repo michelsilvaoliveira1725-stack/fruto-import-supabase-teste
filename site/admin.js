@@ -197,13 +197,27 @@ function variationValue(value) {
 }
 
 function salePackValue(value) {
-  const pack = Number(value);
-  return pack === 5 ? 5 : pack === 4 ? 4 : pack === 3 ? 3 : 1;
+  const pack = Number.parseInt(value, 10);
+  return Number.isFinite(pack) && pack >= 2 && pack <= 100 ? pack : 1;
 }
 
 function salePackLabel(product) {
   const pack = salePackValue(product?.salePack);
-  return pack === 1 ? "Unitário" : `Fechado com ${pack}`;
+  return pack === 1 ? "Unitário" : `Caixa com ${pack}`;
+}
+
+function salePackFromForm() {
+  if (!$("saleBoxEnabled")?.checked) return 1;
+  const pack = salePackValue($("salePack")?.value);
+  return pack > 1 ? pack : 2;
+}
+
+function setSaleBoxForm(value) {
+  const pack = salePackValue(value);
+  const enabled = pack > 1;
+  if ($("saleBoxEnabled")) $("saleBoxEnabled").checked = enabled;
+  if ($("salePack")) $("salePack").value = String(enabled ? pack : 5);
+  if ($("saleBoxQuantityField")) $("saleBoxQuantityField").classList.toggle("hidden", !enabled);
 }
 
 async function api(url, opts = {}) {
@@ -858,7 +872,7 @@ function resetForm() {
   $("series").value = "";
   $("shortDescription").value = "";
   $("displayText").value = "";
-  $("salePack").value = "1";
+  setSaleBoxForm(1);
   $("available").value = "true";
   $("stockControl").checked = false;
   $("stockQuantity").value = "";
@@ -887,7 +901,7 @@ function editProduct(code) {
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
   $("displayText").value = p.displayText || "";
-  $("salePack").value = String(salePackValue(p.salePack));
+  setSaleBoxForm(p.salePack);
   $("available").value = p.available === false ? "false" : "true";
   $("stockControl").checked = stockControlEnabled(p);
   $("stockQuantity").value = stockControlEnabled(p) ? stockQuantityValue(p.stockQuantity) : "";
@@ -917,7 +931,7 @@ function fillDuplicateForm(p, message = true) {
   $("series").value = p.series || "";
   $("shortDescription").value = p.shortDescription || "";
   $("displayText").value = p.displayText || "";
-  $("salePack").value = String(salePackValue(p.salePack));
+  setSaleBoxForm(p.salePack);
   $("available").value = p.available === false ? "false" : "true";
   $("stockControl").checked = stockControlEnabled(p);
   $("stockQuantity").value = stockControlEnabled(p) ? stockQuantityValue(p.stockQuantity) : "";
@@ -1168,7 +1182,7 @@ async function saveProduct(e) {
       available: $("available").value === "true",
       stockControl: $("stockControl").checked,
       stockQuantity: $("stockControl").checked ? stockQuantityValue($("stockQuantity").value) : 0,
-      salePack: salePackValue($("salePack").value),
+      salePack: salePackFromForm(),
       price: $("price").value,
       discountPercent: $("discountPercent").value,
       discountActive: $("discountActive").checked,
@@ -1177,6 +1191,7 @@ async function saveProduct(e) {
     };
     if (original) await api(`/api/products/${encodeURIComponent(original)}`, { method: "PUT", json: payload });
     else await api("/api/products", { method: "POST", json: payload });
+    await api("/api/product-sale-pack", { method: "POST", json: { code: payload.code, salePack: payload.salePack } });
     await api("/api/product-display-text", { method: "POST", json: { code: payload.code, displayText: payload.displayText } });
 
     const keep = new Set(images);
@@ -1725,6 +1740,16 @@ $("setupBtn").addEventListener("click", setup);
 $("loginBtn").addEventListener("click", login);
 $("setupPassword").addEventListener("keydown", e => { if (e.key === "Enter") setup(); });
 $("loginPassword").addEventListener("keydown", e => { if (e.key === "Enter") login(); });
+$("saleBoxEnabled")?.addEventListener("change", () => {
+  const enabled = $("saleBoxEnabled").checked;
+  $("saleBoxQuantityField")?.classList.toggle("hidden", !enabled);
+  if (enabled && salePackValue($("salePack").value) === 1) $("salePack").value = "5";
+});
+$("salePack")?.addEventListener("change", () => {
+  if (!$("saleBoxEnabled")?.checked) return;
+  const pack = salePackValue($("salePack").value);
+  $("salePack").value = String(pack > 1 ? pack : 2);
+});
 $("stockControl").addEventListener("change", () => {
   $("stockQuantityField").classList.toggle("hidden", !$("stockControl").checked);
   if ($("stockControl").checked && $("stockQuantity").value === "") $("stockQuantity").value = "0";

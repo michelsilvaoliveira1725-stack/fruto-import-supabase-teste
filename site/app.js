@@ -103,8 +103,8 @@ function clampQty(value) {
 }
 
 function salePack(product) {
-  const pack = Number(product?.salePack);
-  return pack === 5 ? 5 : pack === 4 ? 4 : pack === 3 ? 3 : 1;
+  const pack = Number.parseInt(product?.salePack, 10);
+  return Number.isFinite(pack) && pack >= 2 && pack <= 100 ? pack : 1;
 }
 
 function stockControlEnabled(product) {
@@ -137,7 +137,7 @@ function normalizeQtyForProduct(value, product) {
 
 function salePackLabel(product) {
   const pack = salePack(product);
-  return pack === 1 ? "Unitário" : `Fechado com ${pack}`;
+  return pack === 1 ? "Unitário" : `Caixa com ${pack}`;
 }
 
 function isAvailable(product) {
@@ -266,6 +266,7 @@ function priceBlock(product) {
   const wrap = document.createElement("div");
   wrap.className = "product-price";
   const price = numericPrice(product.price);
+  const boxSale = salePack(product) > 1;
 
   if (price === null) {
     const consult = document.createElement("span");
@@ -274,6 +275,14 @@ function priceBlock(product) {
     wrap.appendChild(consult);
     return wrap;
   }
+
+  const addUnitSuffix = () => {
+    if (!boxSale) return;
+    const suffix = document.createElement("span");
+    suffix.className = "price-unit-suffix";
+    suffix.textContent = "/ unidade";
+    wrap.appendChild(suffix);
+  };
 
   if (hasActiveDiscount(product)) {
     const top = document.createElement("div");
@@ -285,17 +294,60 @@ function priceBlock(product) {
     badge.className = "discount-badge";
     badge.textContent = `-${String(discountValue(product.discountPercent)).replace(".", ",")}%`;
     top.append(old, badge);
+    const currentLine = document.createElement("div");
+    currentLine.className = "price-current-line";
     const current = document.createElement("strong");
     current.className = "price-current promo";
     current.textContent = formatMoney(finalPrice(product));
-    wrap.append(top, current);
+    currentLine.appendChild(current);
+    if (boxSale) {
+      const suffix = document.createElement("span");
+      suffix.className = "price-unit-suffix";
+      suffix.textContent = "/ unidade";
+      currentLine.appendChild(suffix);
+    }
+    wrap.append(top, currentLine);
   } else {
+    const currentLine = document.createElement("div");
+    currentLine.className = "price-current-line";
     const current = document.createElement("strong");
     current.className = "price-current";
     current.textContent = formatMoney(price);
-    wrap.appendChild(current);
+    currentLine.appendChild(current);
+    if (boxSale) {
+      const suffix = document.createElement("span");
+      suffix.className = "price-unit-suffix";
+      suffix.textContent = "/ unidade";
+      currentLine.appendChild(suffix);
+    }
+    wrap.appendChild(currentLine);
   }
   return wrap;
+}
+
+function boxSaleInfo(product) {
+  const pack = salePack(product);
+  if (pack <= 1) return null;
+
+  const box = document.createElement("div");
+  box.className = "box-sale-info";
+
+  const packLine = document.createElement("b");
+  packLine.textContent = `Caixa com ${pack}`;
+
+  const totalLine = document.createElement("span");
+  const price = finalPrice(product);
+  if (price === null) {
+    totalLine.textContent = "Total da caixa: sob consulta";
+  } else {
+    const label = document.createTextNode("Total da caixa: ");
+    const value = document.createElement("strong");
+    value.textContent = formatMoney(price * pack);
+    totalLine.append(label, value);
+  }
+
+  box.append(packLine, totalLine);
+  return box;
 }
 
 function homeSettings() {
@@ -757,7 +809,7 @@ function createQtyPicker(initialQty, product) {
     const requested = Number.parseInt(input.value, 10) || pack;
     const normalized = normalizeQtyForProduct(requested, product);
     if (stockControlEnabled(product) && requested > maxAllowedQty(product)) toast("Quantidade solicitada maior que a disponível.");
-    else if (String(normalized) !== String(input.value)) toast(pack === 1 ? "Quantidade ajustada." : `Este produto é vendido fechado com ${pack} unidades.`);
+    else if (String(normalized) !== String(input.value)) toast(pack === 1 ? "Quantidade ajustada." : `Este produto é vendido em caixa com ${pack} unidades.`);
     input.value = normalized || pack;
   });
 
@@ -845,13 +897,15 @@ function openProductDetail(product) {
     product.cat || "",
     variationValue(product.variation),
     product.series ? seriesLabel(product.series) : "",
-    `Forma de venda: ${salePackLabel(product)}`,
+    salePack(product) > 1 ? `Venda: ${salePackLabel(product)}` : "Venda: Unitário",
     isAvailable(product) ? "Disponível" : "Esgotado"
   ].filter(Boolean);
   $("productDetailMeta").textContent = meta.join(" · ");
   const priceHost = $("productDetailPrice");
   priceHost.textContent = "";
   priceHost.appendChild(priceBlock(product));
+  const detailBoxInfo = boxSaleInfo(product);
+  if (detailBoxInfo) priceHost.appendChild(detailBoxInfo);
   const desc = String(product.shortDescription || "").trim();
   $("productDetailDescription").textContent = desc || "Descrição resumida não informada para este produto.";
   $("productDetailDescription").classList.toggle("muted", !desc);
@@ -965,6 +1019,7 @@ function render() {
       cat.textContent = categoryParts.join(" · ");
     }
     const price = priceBlock(p);
+    const boxInfo = boxSaleInfo(p);
     if (!isAvailable(p)) {
       const sold = document.createElement("span"); sold.className = "catalog-soldout-badge"; sold.textContent = "Esgotado"; body.appendChild(sold);
     }
@@ -977,7 +1032,9 @@ function render() {
     btn.textContent = !isAvailable(p) ? "Produto esgotado" : (selected[p.code] ? "✓ Atualizar quantidade" : "+ Adicionar ao orçamento");
     if (isAvailable(p)) btn.addEventListener("click", () => addToQuote(p.code, qtyPicker.input.value));
 
-    body.append(code, h, cat, price, qtyPicker.wrap, btn);
+    body.append(code, h, cat, price);
+    if (boxInfo) body.appendChild(boxInfo);
+    body.append(qtyPicker.wrap, btn);
     card.append(media, body);
     card.classList.add("product-card-clickable");
     card.title = "Clique para ver os detalhes do produto";
@@ -1142,7 +1199,7 @@ function renderItems() {
     }
     if (q.columns.unitPrice) {
       const unit = finalPrice(p);
-      addData("Valor do item", unit === null ? "Sob consulta" : formatMoney(unit));
+      addData(salePack(p) > 1 ? "Valor unitário" : "Valor do item", unit === null ? "Sob consulta" : formatMoney(unit));
     }
     if (q.columns.subtotal) {
       const unit = finalPrice(p);

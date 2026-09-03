@@ -475,3 +475,14 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
 .quote-edit-card textarea{width:100%;padding:12px;border:1px solid #d7dbe2;border-radius:9px;background:#fff;font:inherit;resize:vertical}
 .quote-checklist-table td:nth-child(6){min-width:145px}
 @media(max-width:760px){.quote-checklist-table th:nth-child(4),.quote-checklist-table td:nth-child(4){display:none}.quote-checklist-table td:nth-child(3){min-width:160px}.quote-row-actions{min-width:120px}.quote-edit-modal{padding:10px}.quote-edit-card{padding:16px}}
+
+/* V17.9 - venda por caixa: preço unitário + total automático */
+.price-current-line{display:flex;align-items:baseline;gap:5px;flex-wrap:wrap}
+.price-unit-suffix{font-size:11px;font-weight:700;color:var(--muted)}
+.box-sale-info{margin-top:1px;margin-bottom:3px;padding:8px 10px;border:1px solid #e5e9f0;border-radius:9px;background:#f8fafc;display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--navy)}
+.box-sale-info>b{font-size:12px}
+.box-sale-info>span{color:#4f5b6b}
+.box-sale-info>span strong{color:var(--blue);font-size:12px}
+.sale-box-control{padding:12px 14px;border:1px solid #e0e5eb;border-radius:10px;background:#fafbfc}
+.product-detail-content .box-sale-info{max-width:360px;margin:-4px 0 14px;padding:10px 12px}
+@media(max-width:760px){.box-sale-info{padding:7px 9px}.price-unit-suffix{font-size:10px}}

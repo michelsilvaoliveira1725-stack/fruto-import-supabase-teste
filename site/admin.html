@@ -382,7 +382,7 @@
               <div class="field"><label>Código / SKU *</label><input id="code" required maxlength="60" placeholder="Ex.: SEN-0001"></div>
               <div class="field"><label>Nome do produto *</label><input id="name" required maxlength="180" placeholder="Nome completo do produto"></div>
               <div class="field full"><label>Descrição resumida <span class="muted">(opcional)</span></label><textarea id="shortDescription" maxlength="500" rows="3" placeholder="Ex.: Aquarela extrafina com alta concentração de pigmentos, excelente transparência e luminosidade."></textarea><span class="muted small">Aparece somente quando o cliente abrir os detalhes do produto.</span></div>
-              <div class="field full"><label>Texto exibido abaixo do nome <span class="muted">(opcional)</span></label><input id="displayText" maxlength="180" placeholder="Ex.: Aqua Bronze · Fechado com 3"><span class="muted small">Se preencher, o catálogo mostra exatamente este texto na linha abaixo do nome. Se deixar vazio, continua usando categoria, variação, série e forma de venda automaticamente.</span></div>
+              <div class="field full"><label>Texto exibido abaixo do nome <span class="muted">(opcional)</span></label><input id="displayText" maxlength="180" placeholder="Ex.: Aqua Bronze · Caixa com 3"><span class="muted small">Se preencher, o catálogo mostra exatamente este texto na linha abaixo do nome. Se deixar vazio, continua usando categoria, variação, série e forma de venda automaticamente.</span></div>
             </div>
           </section>
 
@@ -399,7 +399,8 @@
           <section class="product-form-group">
             <div class="product-form-group-head"><span>03</span><div><h3>Venda e estoque</h3><p>Defina a forma de venda e a disponibilidade.</p></div></div>
             <div class="form-grid">
-              <div class="field"><label>Forma de venda *</label><select id="salePack" required><option value="1">Unitário (1 unidade)</option><option value="3">Fechado com 3 unidades</option><option value="4">Fechado com 4 unidades</option><option value="5">Fechado com 5 unidades</option></select><span class="muted small">Unitário aceita qualquer quantidade. Fechado com 3, 4 ou 5 começa no pacote escolhido e aceita somente múltiplos dele no orçamento.</span></div>
+              <div class="field full sale-box-control"><label class="switch-line"><input id="saleBoxEnabled" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Venda por caixa</span></label><span class="muted small">Ative somente nos produtos vendidos em caixa. O preço cadastrado continua sendo o valor de 1 unidade.</span></div>
+              <div class="field hidden" id="saleBoxQuantityField"><label>Quantidade de unidades por caixa</label><input id="salePack" type="number" min="2" max="100" step="1" inputmode="numeric" value="5" placeholder="Ex.: 5"><span class="muted small">Ex.: preço unitário R$ 42,00 + caixa com 5 = total da caixa R$ 210,00. O cliente seleciona 5, 10, 15...</span></div>
               <div class="field"><label>Disponibilidade *</label><select id="available" required><option value="true">Disponível</option><option value="false">Esgotado</option></select><span class="muted small">Esgotado continua visível no catálogo, mas não pode ser adicionado ao orçamento.</span></div>
               <div class="field full stock-control-field"><label class="switch-line"><input id="stockControl" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Controlar quantidade disponível</span></label><span class="muted small">Opcional. O cliente não vê a quantidade em estoque, mas o sistema impede solicitar acima do limite.</span></div>
               <div class="field hidden" id="stockQuantityField"><label>Quantidade disponível</label><input id="stockQuantity" type="number" min="0" max="999999" step="1" inputmode="numeric" placeholder="Ex.: 5"><span class="muted small">A quantidade aparece somente no Admin. Se não houver quantidade suficiente para a forma de venda, o produto fica esgotado automaticamente.</span></div>
@@ -409,7 +410,7 @@
           <section class="product-form-group">
             <div class="product-form-group-head"><span>04</span><div><h3>Preço e promoção</h3><p>Informe o valor e ative desconto quando necessário.</p></div></div>
             <div class="form-grid">
-              <div class="field"><label>Preço do produto (R$)</label><input id="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 89.90"><span class="muted small">Se deixar vazio, o produto ficará sem preço definido no catálogo.</span></div>
+              <div class="field"><label>Preço unitário (R$)</label><input id="price" type="number" min="0" max="9999999.99" step="0.01" inputmode="decimal" placeholder="Ex.: 89.90"><span class="muted small">Informe o valor de 1 unidade. Se a venda por caixa estiver ativa, o sistema calcula o total da caixa automaticamente. Se deixar vazio, o produto ficará sem preço definido no catálogo.</span></div>
               <div class="field"><label>Desconto (%)</label><input id="discountPercent" type="number" min="0" max="100" step="0.1" inputmode="decimal" placeholder="Ex.: 10"></div>
               <div class="field full discount-control">
                 <label class="switch-line"><input id="discountActive" type="checkbox"><span class="switch-ui" aria-hidden="true"></span><span>Ativar desconto no catálogo</span></label>
