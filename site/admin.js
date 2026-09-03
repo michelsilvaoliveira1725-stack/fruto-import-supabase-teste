@@ -1526,6 +1526,100 @@ function formatQuoteDate(value) {
   catch { return String(value || ""); }
 }
 
+function quoteActionButton(text, className = "secondary small-button") {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = className;
+  btn.textContent = text;
+  return btn;
+}
+
+function openQuoteEdit(q) {
+  $("quoteEditId").value = q.quote_id || "";
+  $("quoteEditCustomer").value = q.customer_name || "";
+  $("quoteEditCep").value = q.cep || "";
+  $("quoteEditAddress").value = q.address || "";
+  $("quoteEditNote").value = q.note || "";
+  $("quoteEditModal").classList.remove("hidden");
+  $("quoteEditCustomer").focus();
+}
+
+function closeQuoteEdit() {
+  $("quoteEditModal")?.classList.add("hidden");
+}
+
+async function saveQuoteEdit() {
+  const btn = $("quoteEditSave");
+  const quoteId = $("quoteEditId").value;
+  if (!quoteId) return;
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = "Salvando...";
+  try {
+    const d = await api("/api/quote-requests", {
+      method: "PATCH",
+      json: {
+        action: "edit",
+        quoteId,
+        customer: $("quoteEditCustomer").value.trim(),
+        cep: $("quoteEditCep").value.trim(),
+        address: $("quoteEditAddress").value.trim(),
+        note: $("quoteEditNote").value.trim()
+      }
+    });
+    closeQuoteEdit();
+    await loadQuoteRequests();
+    notice("quoteChecklistNotice", d.pdfWarning ? `Dados salvos. ${d.pdfWarning}` : "Orçamento atualizado e PDF renovado.", d.pdfWarning ? "" : "success");
+  } catch (e) {
+    notice("quoteChecklistNotice", e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+async function regenerateQuotePdf(q, btn) {
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = "Gerando...";
+  try {
+    await api("/api/quote-requests", { method: "POST", json: { action: "regenerate", quoteId: q.quote_id } });
+    q.has_pdf = true;
+    await loadQuoteRequests();
+    notice("quoteChecklistNotice", "Cópia do PDF gerada e salva no ADM.", "success");
+  } catch (e) {
+    notice("quoteChecklistNotice", e.message, "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+}
+
+async function openQuotePdf(q, btn) {
+  if (!q.has_pdf) return regenerateQuotePdf(q, btn);
+  btn.disabled = true;
+  try {
+    const d = await api(`/api/quote-requests?quoteId=${encodeURIComponent(q.quote_id)}`);
+    if (d.url) window.open(d.url, "_blank", "noopener");
+  } catch (e) {
+    notice("quoteChecklistNotice", e.message, "error");
+  } finally { btn.disabled = false; }
+}
+
+async function deleteQuoteRequest(q, btn) {
+  const who = q.customer_name || "Cliente não informado";
+  if (!confirm(`Excluir o orçamento de ${who}?\n\nIsso remove somente o registro do checklist e a cópia do PDF. O estoque já finalizado não será alterado.`)) return;
+  btn.disabled = true;
+  try {
+    await api("/api/quote-requests", { method: "DELETE", json: { quoteId: q.quote_id } });
+    quoteRequests = quoteRequests.filter(row => row.quote_id !== q.quote_id);
+    renderQuoteRequests();
+    notice("quoteChecklistNotice", "Orçamento removido do controle.", "success");
+  } catch (e) {
+    notice("quoteChecklistNotice", e.message, "error");
+  } finally { btn.disabled = false; }
+}
+
 function renderQuoteRequests() {
   const rows = $("quoteChecklistRows");
   if (!rows) return;
@@ -1535,7 +1629,7 @@ function renderQuoteRequests() {
   if (!quoteRequests.length) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 5; td.className = "muted"; td.textContent = "Nenhum orçamento finalizado ainda.";
+    td.colSpan = 6; td.className = "muted"; td.textContent = "Nenhum orçamento finalizado ainda.";
     tr.appendChild(td); rows.appendChild(tr); return;
   }
   quoteRequests.forEach(q => {
@@ -1564,17 +1658,36 @@ function renderQuoteRequests() {
     const customerTd = document.createElement("td");
     const customer = document.createElement("b"); customer.textContent = q.customer_name || "Cliente não informado";
     customerTd.appendChild(customer);
-    if (q.cep || q.address) { const small=document.createElement("small"); small.className="quote-client-detail"; small.textContent=[q.address,q.cep?`CEP ${q.cep}`:""].filter(Boolean).join(" · "); customerTd.appendChild(small); }
+    if (q.cep || q.address) {
+      const small = document.createElement("small");
+      small.className = "quote-client-detail";
+      small.textContent = [q.address, q.cep ? `CEP ${q.cep}` : ""].filter(Boolean).join(" · ");
+      customerTd.appendChild(small);
+    }
+    if (q.note) {
+      const note = document.createElement("small");
+      note.className = "quote-client-detail";
+      note.textContent = `Obs.: ${q.note}`;
+      customerTd.appendChild(note);
+    }
     const itemsTd = document.createElement("td"); itemsTd.textContent = String(q.item_count || 0);
+
     const pdfTd = document.createElement("td");
-    const btn = document.createElement("button"); btn.type="button"; btn.className="secondary small-button"; btn.textContent="Abrir PDF";
-    btn.addEventListener("click", async () => {
-      btn.disabled=true;
-      try { const d=await api(`/api/quote-requests?quoteId=${encodeURIComponent(q.quote_id)}`); if(d.url) window.open(d.url,"_blank","noopener"); }
-      catch(e){ notice("quoteChecklistNotice", e.message, "error"); } finally { btn.disabled=false; }
-    });
-    pdfTd.appendChild(btn);
-    tr.append(checkTd,dateTd,customerTd,itemsTd,pdfTd); rows.appendChild(tr);
+    const pdfBtn = quoteActionButton(q.has_pdf ? "Abrir PDF" : "Gerar PDF");
+    if (!q.has_pdf) pdfBtn.classList.add("quote-pdf-missing");
+    pdfBtn.addEventListener("click", () => openQuotePdf(q, pdfBtn));
+    pdfTd.appendChild(pdfBtn);
+
+    const actionTd = document.createElement("td");
+    actionTd.className = "quote-row-actions";
+    const editBtn = quoteActionButton("Editar");
+    editBtn.addEventListener("click", () => openQuoteEdit(q));
+    const deleteBtn = quoteActionButton("Excluir", "danger small-button");
+    deleteBtn.addEventListener("click", () => deleteQuoteRequest(q, deleteBtn));
+    actionTd.append(editBtn, deleteBtn);
+
+    tr.append(checkTd, dateTd, customerTd, itemsTd, pdfTd, actionTd);
+    rows.appendChild(tr);
   });
 }
 
@@ -1722,3 +1835,8 @@ $("bulkSaveBtn")?.addEventListener("click", saveBulkPrice);
 $("bulkPriceState")?.addEventListener("change", () => $("bulkPreviewBox")?.classList.add("hidden"));
 
 $("refreshQuotesBtn")?.addEventListener("click", loadQuoteRequests);
+$("quoteEditSave")?.addEventListener("click", saveQuoteEdit);
+$("quoteEditClose")?.addEventListener("click", closeQuoteEdit);
+$("quoteEditCancel")?.addEventListener("click", closeQuoteEdit);
+$("quoteEditModal")?.addEventListener("click", e => { if (e.target === $("quoteEditModal")) closeQuoteEdit(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("quoteEditModal")?.classList.contains("hidden")) closeQuoteEdit(); });

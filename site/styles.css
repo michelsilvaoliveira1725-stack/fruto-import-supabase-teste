@@ -465,3 +465,13 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
 .quote-checklist-list{max-height:620px}
 .quote-checklist-table td:nth-child(3){min-width:220px}
 @media(max-width:760px){.quote-checklist-table th:nth-child(4),.quote-checklist-table td:nth-child(4){display:none}.quote-checklist-table td:nth-child(3){min-width:170px}}
+
+
+/* ===== V17.7.2: PDF persistente + editar/excluir orçamento ===== */
+.quote-row-actions{display:flex;gap:6px;flex-wrap:wrap;min-width:145px}
+.quote-pdf-missing{border-color:#f1c27d!important;color:#9a5b00!important;background:#fffaf0!important}
+.quote-edit-modal{position:fixed;inset:0;z-index:120;background:rgba(9,18,39,.62);display:flex;align-items:center;justify-content:center;padding:20px}
+.quote-edit-card{width:min(680px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:22px;box-shadow:0 28px 80px rgba(0,0,0,.28)}
+.quote-edit-card textarea{width:100%;padding:12px;border:1px solid #d7dbe2;border-radius:9px;background:#fff;font:inherit;resize:vertical}
+.quote-checklist-table td:nth-child(6){min-width:145px}
+@media(max-width:760px){.quote-checklist-table th:nth-child(4),.quote-checklist-table td:nth-child(4){display:none}.quote-checklist-table td:nth-child(3){min-width:160px}.quote-row-actions{min-width:120px}.quote-edit-modal{padding:10px}.quote-edit-card{padding:16px}}

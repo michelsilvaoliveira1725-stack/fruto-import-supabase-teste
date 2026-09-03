@@ -126,11 +126,32 @@
       <div id="quoteChecklistNotice" class="notice hidden"></div>
       <div class="admin-list quote-checklist-list">
         <table class="admin-table quote-checklist-table">
-          <thead><tr><th>Check</th><th>Data</th><th>Cliente</th><th>Itens</th><th>PDF</th></tr></thead>
-          <tbody id="quoteChecklistRows"><tr><td colspan="5" class="muted">Nenhum orçamento finalizado ainda.</td></tr></tbody>
+          <thead><tr><th>Check</th><th>Data</th><th>Cliente</th><th>Itens</th><th>PDF</th><th>Ações</th></tr></thead>
+          <tbody id="quoteChecklistRows"><tr><td colspan="6" class="muted">Nenhum orçamento finalizado ainda.</td></tr></tbody>
         </table>
       </div>
     </section>
+
+    <div id="quoteEditModal" class="quote-edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="quoteEditTitle">
+      <div class="quote-edit-card">
+        <div class="panel-title-row compact-row">
+          <div><span class="eyebrow">EDITAR ORÇAMENTO</span><h3 id="quoteEditTitle">Dados do cliente</h3></div>
+          <button class="secondary small-button" type="button" id="quoteEditClose">Fechar</button>
+        </div>
+        <input type="hidden" id="quoteEditId">
+        <div class="form-grid">
+          <div class="field full"><label>Nome / empresa</label><input id="quoteEditCustomer" maxlength="120"></div>
+          <div class="field"><label>CEP</label><input id="quoteEditCep" maxlength="20"></div>
+          <div class="field"><label>Endereço</label><input id="quoteEditAddress" maxlength="300"></div>
+          <div class="field full"><label>Observação</label><textarea id="quoteEditNote" rows="3" maxlength="500"></textarea></div>
+        </div>
+        <p class="muted small">Produtos e quantidades não são alterados aqui. Ao salvar, a cópia do PDF é atualizada automaticamente.</p>
+        <div class="actions">
+          <button class="primary" type="button" id="quoteEditSave">Salvar alterações</button>
+          <button class="secondary" type="button" id="quoteEditCancel">Cancelar</button>
+        </div>
+      </div>
+    </div>
 
     <section class="panel admin-section hidden" id="serviceSection">
       <div class="section-heading-block"><span class="eyebrow">ATENDIMENTO</span><h2>Configuração de atendimento</h2></div>
