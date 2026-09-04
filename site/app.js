@@ -1383,15 +1383,16 @@ function quoteTotalEstimated() {
   }, 0);
 }
 
-async function saveFinalizedQuote() {
-  const payload = quotePayload();
+async function saveFinalizedQuote(payloadOverride = null, totalEstimatedOverride = null) {
+  const payload = payloadOverride && typeof payloadOverride === "object" ? payloadOverride : quotePayload();
+  const totalEstimated = Number.isFinite(totalEstimatedOverride) ? totalEstimatedOverride : quoteTotalEstimated();
   const r = await fetch("/api/quote-requests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       quoteId: createQuoteId(),
       ...payload,
-      totalEstimated: quoteTotalEstimated()
+      totalEstimated
     }),
     cache: "no-store"
   });
@@ -1413,25 +1414,31 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-function whatsappMessage() {
+function whatsappMessage(pdfUrl = "") {
   const customer = quoteSettings().showCustomer ? $("customerName").value.trim() : "";
   const cep = quoteSettings().showAddress ? $("customerCep").value.trim() : "";
   const address = quoteSettings().showAddress ? $("customerAddress").value.trim() : "";
   const note = quoteSettings().showNote ? $("customerNote").value.trim() : "";
   const lines = [
     customer
-      ? `Olá, Fruto Importadora! Sou ${customer}. Segue minha solicitação de orçamento em PDF.`
-      : "Olá, Fruto Importadora! Segue minha solicitação de orçamento em PDF."
+      ? `Olá, Fruto Importadora! Sou ${customer}. Segue minha solicitação de orçamento.`
+      : "Olá, Fruto Importadora! Segue minha solicitação de orçamento."
   ];
   if (address) lines.push(`Endereço: ${address}${cep ? ` - CEP ${cep}` : ""}`);
   else if (cep) lines.push(`CEP: ${cep}`);
   if (note) lines.push(`Observação: ${note}`);
+  if (pdfUrl) lines.push(`PDF do orçamento: ${pdfUrl}`);
   return lines.join("\n");
 }
 
-function whatsappUrl() {
+function whatsappUrl(pdfUrl = "") {
   const phone = String(settings.whatsapp || "5511996576368").replace(/\D/g, "");
-  return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage())}` : "";
+  return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage(pdfUrl))}` : "";
+}
+
+function quotePdfShareUrl(quoteId) {
+  const id = String(quoteId || "").trim();
+  return id ? `${window.location.origin}/api/quote-file?quoteId=${encodeURIComponent(id)}` : "";
 }
 
 async function sendPdf() {
@@ -1444,54 +1451,26 @@ async function sendPdf() {
   const btn = $("sendWhatsApp");
   const original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = "Gerando PDF...";
+  btn.textContent = "Finalizando...";
 
   try {
-    const blob = await generatePdfBlob();
-    const filename = `fruto-importadora-orcamento-${new Date().toISOString().slice(0,10)}.pdf`;
-    const file = new File([blob], filename, { type: "application/pdf" });
-    const shortMessage = whatsappMessage();
-
-    // Em celulares compatíveis, tenta compartilhar o próprio PDF. O usuário
-    // escolhe o WhatsApp no menu de compartilhamento e o arquivo segue anexado.
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          title: "Solicitação de orçamento - Fruto Importadora",
-          text: shortMessage,
-          files: [file]
-        });
-        await finalizeQuoteStock();
-        await saveFinalizedQuote();
-        resetQuoteAfterFinalize();
-        toast("Solicitação finalizada. Um novo orçamento já pode ser iniciado.");
-        return;
-      } catch (shareErr) {
-        // Se o cliente cancelar, não abrimos outro fluxo automaticamente.
-        if (shareErr && shareErr.name === "AbortError") {
-          toast("Compartilhamento cancelado. O PDF não foi enviado.");
-          return;
-        }
-        // Em navegadores que bloqueiam o compartilhamento após gerar o PDF,
-        // seguimos para o modo compatível abaixo.
-      }
-    }
-
-    // Modo compatível: confirma o estoque, baixa o PDF e abre o WhatsApp apenas com mensagem curta.
+    const totalEstimated = quoteTotalEstimated();
     await finalizeQuoteStock();
-    await saveFinalizedQuote();
-    downloadBlob(blob, filename);
-    const wa = whatsappUrl();
-    if (wa) {
-      resetQuoteAfterFinalize();
-      toast("Solicitação finalizada. Abrindo o WhatsApp.");
-      window.location.href = wa;
-    } else {
-      resetQuoteAfterFinalize();
-      toast("PDF gerado. O orçamento foi limpo para uma nova solicitação.");
+    const saved = await saveFinalizedQuote(payload, totalEstimated);
+    if (!saved?.pdfStored) {
+      throw new Error(saved?.pdfWarning || "O orçamento foi salvo, mas a cópia do PDF ainda não ficou disponível. Tente novamente.");
     }
+
+    const quoteId = String(saved?.quoteId || createQuoteId()).trim();
+    const pdfUrl = quotePdfShareUrl(quoteId);
+    const wa = whatsappUrl(pdfUrl);
+    if (!wa) throw new Error("Cadastre um número de WhatsApp no ADM antes de usar esta opção.");
+
+    resetQuoteAfterFinalize();
+    toast("Solicitação finalizada. Abrindo a conversa no WhatsApp.");
+    window.location.href = wa;
   } catch (err) {
-    alert(err.message || "Não foi possível gerar o PDF.");
+    alert(err.message || "Não foi possível finalizar o orçamento.");
   } finally {
     btn.disabled = false;
     btn.textContent = original;
