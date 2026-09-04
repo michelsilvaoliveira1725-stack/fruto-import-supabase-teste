@@ -6,7 +6,7 @@ const DEFAULT_HOME = {
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORTADORA",
+    brandName: "FRUTO DE ARTE",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -14,13 +14,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO DE ARTE",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e envie sua solicitação de forma rápida para a Fruto de Arte." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -68,13 +68,13 @@ const DEFAULT_HOME = {
 const DEFAULT_QUOTE = {
   title: "Minha solicitação",
   intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORTADORA", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Importadora", pdfFooterText: "Fruto Importadora",
+  pdfHeaderTitle: "FRUTO DE ARTE", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto de Arte", pdfFooterText: "Fruto de Arte",
   showCustomer: true, showAddress: false, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
   columns: { product: true, code: true, series: false, salePack: false, quantity: true, unitPrice: true, subtotal: false }
 };
 
 let products = [];
-let settings = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
+let settings = { businessName: "Fruto de Arte", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 let currentBrand = "";
 let currentCat = "Todos";
 let currentVariation = "Todas";
@@ -388,7 +388,7 @@ function applySettings() {
     if (logoImage.dataset.sourceUrl !== customLogo) {
       logoImage.dataset.sourceUrl = customLogo;
       attachReliableImage(logoImage, [customLogo], {
-        alt: "Logo Fruto Importadora",
+        alt: "Logo Fruto de Arte",
         lazy: false,
         onEmpty: () => {
           delete logoImage.dataset.sourceUrl;
@@ -498,7 +498,7 @@ function renderHomeVideos(raw) {
     const ytThumb = youtubeThumbnail(item.url);
     const thumb = item.thumbnail || ytThumb;
     if (thumb) { const img=document.createElement("img"); img.src=thumb; img.alt=item.title; img.loading="lazy"; img.onerror=()=>{ if (ytThumb && img.src !== ytThumb) img.src=ytThumb; }; media.appendChild(img); }
-    else { const ph=document.createElement("div"); ph.className="video-placeholder"; ph.textContent="FRUTO IMPORTADORA"; media.appendChild(ph); }
+    else { const ph=document.createElement("div"); ph.className="video-placeholder"; ph.textContent="FRUTO DE ARTE"; media.appendChild(ph); }
     const play=document.createElement("span"); play.className="video-play"; play.textContent="▶"; media.appendChild(play);
     if (item.duration) { const d=document.createElement("span"); d.className="video-duration"; d.textContent=item.duration; media.appendChild(d); }
     const info=document.createElement("div"); info.className="home-video-info";
@@ -552,6 +552,11 @@ function applyQuoteSettings() {
   $("customerNoteLabel").classList.toggle("hidden", !q.showNote);
   $("drawerSummary").classList.toggle("hidden", !q.showSummary);
   $("downloadPdf").classList.toggle("hidden", !q.showDownloadPdf);
+  const phoneMode = isPhoneDevice();
+  $("sendWhatsApp").textContent = phoneMode ? "Abrir PDF" : "Gerar PDF + WhatsApp";
+  $("shareNote").textContent = phoneMode
+    ? "No celular, ao finalizar, o PDF abre diretamente para conferência."
+    : "No computador, ao finalizar, o WhatsApp cadastrado abre com o link do PDF do orçamento.";
   $("shareNote").classList.toggle("hidden", !q.showShareNote);
 }
 
@@ -1414,6 +1419,11 @@ function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
+function isPhoneDevice() {
+  if (navigator.userAgentData && typeof navigator.userAgentData.mobile === "boolean") return navigator.userAgentData.mobile;
+  return /Android.*Mobile|iPhone|iPod|Windows Phone|IEMobile/i.test(navigator.userAgent || "");
+}
+
 function whatsappMessage(pdfUrl = "") {
   const customer = quoteSettings().showCustomer ? $("customerName").value.trim() : "";
   const cep = quoteSettings().showAddress ? $("customerCep").value.trim() : "";
@@ -1421,8 +1431,8 @@ function whatsappMessage(pdfUrl = "") {
   const note = quoteSettings().showNote ? $("customerNote").value.trim() : "";
   const lines = [
     customer
-      ? `Olá, Fruto Importadora! Sou ${customer}. Segue minha solicitação de orçamento.`
-      : "Olá, Fruto Importadora! Segue minha solicitação de orçamento."
+      ? `Olá, Fruto de Arte! Sou ${customer}. Segue minha solicitação de orçamento.`
+      : "Olá, Fruto de Arte! Segue minha solicitação de orçamento."
   ];
   if (address) lines.push(`Endereço: ${address}${cep ? ` - CEP ${cep}` : ""}`);
   else if (cep) lines.push(`CEP: ${cep}`);
@@ -1463,10 +1473,16 @@ async function sendPdf() {
 
     const quoteId = String(saved?.quoteId || createQuoteId()).trim();
     const pdfUrl = quotePdfShareUrl(quoteId);
-    const wa = whatsappUrl(pdfUrl);
-    if (!wa) throw new Error("Cadastre um número de WhatsApp no ADM antes de usar esta opção.");
 
     resetQuoteAfterFinalize();
+    if (isPhoneDevice()) {
+      toast("Solicitação finalizada. Abrindo o PDF.");
+      window.location.href = pdfUrl;
+      return;
+    }
+
+    const wa = whatsappUrl(pdfUrl);
+    if (!wa) throw new Error("Cadastre um número de WhatsApp no ADM antes de usar esta opção.");
     toast("Solicitação finalizada. Abrindo a conversa no WhatsApp.");
     window.location.href = wa;
   } catch (err) {
@@ -1486,7 +1502,7 @@ async function downloadPdf() {
     const blob = await generatePdfBlob();
     await finalizeQuoteStock();
     await saveFinalizedQuote();
-    downloadBlob(blob, `fruto-importadora-orcamento-${new Date().toISOString().slice(0,10)}.pdf`);
+    downloadBlob(blob, `fruto-de-arte-orcamento-${new Date().toISOString().slice(0,10)}.pdf`);
     resetQuoteAfterFinalize();
     toast("PDF gerado. O orçamento foi limpo para uma nova solicitação.");
   } catch (err) {

@@ -6,7 +6,7 @@ const DEFAULT_HOME = {
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORTADORA",
+    brandName: "FRUTO DE ARTE",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -14,13 +14,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO DE ARTE",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e envie sua solicitação de forma rápida para a Fruto de Arte." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -67,7 +67,7 @@ const DEFAULT_HOME = {
 };
 const DEFAULT_QUOTE = {
   title: "Minha solicitação", intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORTADORA", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto Importadora", pdfFooterText: "Fruto Importadora",
+  pdfHeaderTitle: "FRUTO DE ARTE", pdfHeaderSubtitle: "Solicitação de Orçamento", pdfContactLabel: "WhatsApp Fruto de Arte", pdfFooterText: "Fruto de Arte",
   showCustomer: true, showAddress: false, showNote: true, showSummary: true, showGrandTotal: true, showDownloadPdf: true, showShareNote: true,
   columns: { product: true, code: true, series: false, salePack: false, quantity: true, unitPrice: true, subtotal: false }
 };
@@ -104,7 +104,7 @@ function productCodeKey(value) {
 let removedImages = [];
 let removedVideoThumbs = [];
 const MAX_PRODUCT_IMAGES = 10;
-let currentSettings = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
+let currentSettings = { businessName: "Fruto de Arte", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 let quoteRequests = [];
 
 function notice(id, msg, type = "") {
