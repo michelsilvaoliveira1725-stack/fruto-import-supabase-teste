@@ -552,11 +552,8 @@ function applyQuoteSettings() {
   $("customerNoteLabel").classList.toggle("hidden", !q.showNote);
   $("drawerSummary").classList.toggle("hidden", !q.showSummary);
   $("downloadPdf").classList.toggle("hidden", !q.showDownloadPdf);
-  const phoneMode = isPhoneDevice();
-  $("sendWhatsApp").textContent = phoneMode ? "Abrir PDF" : "Gerar PDF + WhatsApp";
-  $("shareNote").textContent = phoneMode
-    ? "No celular, ao finalizar, o PDF abre diretamente para conferência."
-    : "No computador, ao finalizar, o WhatsApp cadastrado abre com o link do PDF do orçamento.";
+  $("sendWhatsApp").textContent = "Gerar PDF + WhatsApp";
+  $("shareNote").textContent = "Ao finalizar, o WhatsApp cadastrado abre direto com o link do PDF do orçamento.";
   $("shareNote").classList.toggle("hidden", !q.showShareNote);
 }
 
@@ -1425,19 +1422,8 @@ function isPhoneDevice() {
 }
 
 function whatsappMessage(pdfUrl = "") {
-  const customer = quoteSettings().showCustomer ? $("customerName").value.trim() : "";
-  const cep = quoteSettings().showAddress ? $("customerCep").value.trim() : "";
-  const address = quoteSettings().showAddress ? $("customerAddress").value.trim() : "";
-  const note = quoteSettings().showNote ? $("customerNote").value.trim() : "";
-  const lines = [
-    customer
-      ? `Olá, Fruto de Arte! Sou ${customer}. Segue minha solicitação de orçamento.`
-      : "Olá, Fruto de Arte! Segue minha solicitação de orçamento."
-  ];
-  if (address) lines.push(`Endereço: ${address}${cep ? ` - CEP ${cep}` : ""}`);
-  else if (cep) lines.push(`CEP: ${cep}`);
-  if (note) lines.push(`Observação: ${note}`);
-  if (pdfUrl) lines.push(`PDF do orçamento: ${pdfUrl}`);
+  const lines = ["Olá, Fruto de Arte! Segue o orçamento em PDF:"];
+  if (pdfUrl) lines.push(pdfUrl);
   return lines.join("\n");
 }
 
@@ -1475,12 +1461,6 @@ async function sendPdf() {
     const pdfUrl = quotePdfShareUrl(quoteId);
 
     resetQuoteAfterFinalize();
-    if (isPhoneDevice()) {
-      toast("Solicitação finalizada. Abrindo o PDF.");
-      window.location.href = pdfUrl;
-      return;
-    }
-
     const wa = whatsappUrl(pdfUrl);
     if (!wa) throw new Error("Cadastre um número de WhatsApp no ADM antes de usar esta opção.");
     toast("Solicitação finalizada. Abrindo a conversa no WhatsApp.");
