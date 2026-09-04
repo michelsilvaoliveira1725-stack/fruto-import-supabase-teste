@@ -87,6 +87,9 @@
       <button type="button" class="admin-section-tab" data-admin-section="serviceSection">
         <span class="admin-tab-icon">◉</span><span><b>Atendimento</b><small>WhatsApp do orçamento</small></span>
       </button>
+      <button type="button" class="admin-section-tab" data-admin-section="clientsSection">
+        <span class="admin-tab-icon">♙</span><span><b>Clientes</b><small>Login e descontos</small></span>
+      </button>
     </nav>
     <div class="admin-content">
       <section class="admin-section hidden" id="overviewSection">
@@ -204,6 +207,53 @@
         </div>
         <div class="actions quote-admin-save"><button class="primary" type="button" id="saveSettingsBottom">Salvar alterações do orçamento</button></div>
       </div>
+    </section>
+
+    <section class="panel admin-section hidden" id="clientsSection">
+      <div class="section-heading-block">
+        <span class="eyebrow">ACESSO DE CLIENTES</span>
+        <h2>Portal privado e condições por cliente</h2>
+        <p class="muted small">A estrutura fica pronta e desligada por padrão. Quando estiver desligada, o catálogo continua público exatamente como está hoje.</p>
+      </div>
+
+      <div id="portalClientNotice" class="notice hidden"></div>
+
+      <div class="portal-admin-status">
+        <div>
+          <strong id="portalModeTitle">Site público</strong>
+          <span class="muted small" id="portalModeText">Qualquer pessoa com o link pode acessar o catálogo.</span>
+        </div>
+        <label class="portal-switch"><input type="checkbox" id="portalEnabled"> Exigir login de clientes</label>
+      </div>
+      <div class="actions" style="margin-top:12px">
+        <button class="primary" type="button" id="savePortalMode">Salvar modo de acesso</button>
+        <button class="secondary" type="button" id="refreshPortalClients">Atualizar</button>
+      </div>
+
+      <div class="portal-client-form">
+        <div class="panel-title-row compact-row">
+          <div><h3 id="portalClientFormTitle">Cadastrar cliente</h3><p class="muted small">Defina quem pode entrar e qual desconto geral será aplicado quando o portal privado estiver ativo.</p></div>
+          <button class="secondary small-button hidden" type="button" id="cancelPortalClientEdit">Cancelar edição</button>
+        </div>
+        <input type="hidden" id="portalClientId">
+        <div class="form-grid">
+          <div class="field"><label>Nome / empresa</label><input id="portalClientName" maxlength="120" placeholder="Ex.: Loja Cliente 1"></div>
+          <div class="field"><label>Login</label><input id="portalClientLogin" maxlength="160" autocomplete="off" placeholder="Ex.: cliente1"></div>
+          <div class="field"><label>Senha</label><input id="portalClientPassword" type="password" maxlength="160" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+          <div class="field"><label>Desconto geral (%)</label><input id="portalClientDiscount" type="number" min="0" max="100" step="0.1" value="0"></div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px"><input type="checkbox" id="portalClientActive" checked> Cliente autorizado a entrar</label>
+        <p class="muted small">Ao editar um cliente, deixe a senha vazia para manter a senha atual.</p>
+        <div class="actions"><button class="primary" type="button" id="savePortalClient">Salvar cliente</button></div>
+      </div>
+
+      <div class="admin-list" style="margin-top:18px">
+        <table class="admin-table portal-client-table">
+          <thead><tr><th>Cliente</th><th>Login</th><th>Desconto</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="portalClientRows"><tr><td colspan="5" class="muted">Nenhum cliente cadastrado.</td></tr></tbody>
+        </table>
+      </div>
+      <p class="muted small" style="margin-top:12px"><b>Importante:</b> desligando “Exigir login de clientes”, o site volta imediatamente ao modo público e os descontos individuais deixam de ser aplicados.</p>
     </section>
 
     <section class="panel homepage-admin admin-section hidden" id="homepageSection">

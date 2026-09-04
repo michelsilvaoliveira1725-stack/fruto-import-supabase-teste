@@ -486,3 +486,37 @@ body[data-brand-label-position="hidden"] .product-pic .brand-mini{display:none}
 .sale-box-control{padding:12px 14px;border:1px solid #e0e5eb;border-radius:10px;background:#fafbfc}
 .product-detail-content .box-sale-info{max-width:360px;margin:-4px 0 14px;padding:10px 12px}
 @media(max-width:760px){.box-sale-info{padding:7px 9px}.price-unit-suffix{font-size:10px}}
+
+/* V17.13 - portal privado de clientes (desativado por padrão) */
+.client-login-overlay{position:fixed;inset:0;z-index:10000;background:rgba(7,18,43,.86);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px)}
+.client-login-overlay.hidden{display:none}
+.client-login-card{width:min(430px,100%);background:#fff;border-radius:22px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.3);display:grid;gap:14px}
+.client-login-card h1{margin:0;color:#0b1736;font-size:28px}
+.client-login-card p{margin:0 0 4px;color:#586171;line-height:1.5}
+.client-login-card label{display:grid;gap:6px;font-weight:800;color:#263249;font-size:13px}
+.client-login-card input{width:100%;border:1px solid #d9dfeb;border-radius:12px;padding:13px 14px;font:inherit;outline:none}
+.client-login-card input:focus{border-color:#1d56b3;box-shadow:0 0 0 3px rgba(29,86,179,.12)}
+.client-login-card button{width:100%;padding:13px 16px;border-radius:12px;border:0;background:#0b3478;color:#fff;font-weight:800;cursor:pointer}
+.client-login-card small{color:#7b8492;text-align:center}
+.client-login-notice{padding:10px 12px;border-radius:10px;background:#eef4ff;color:#23406e;font-size:13px}
+.client-login-notice.error{background:#fff0f0;color:#a22424}
+body.portal-locked>header,body.portal-locked>main,body.portal-locked>.drawer-overlay,body.portal-locked>.drawer{pointer-events:none;user-select:none}
+.client-session-box{display:flex;align-items:center;gap:10px;background:#f2f6ff;border:1px solid #d7e1f6;border-radius:12px;padding:7px 9px;color:#0b3478}
+.client-session-box.hidden{display:none}
+.client-session-box>span{display:flex;flex-direction:column;line-height:1.15;max-width:180px}
+.client-session-box b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.client-session-box small{font-size:10px;color:#5a6d8c;margin-top:2px}
+.client-session-box button{border:0;background:transparent;color:#a22b2b;font-weight:800;cursor:pointer;padding:5px}
+.client-discount-badge{background:#0d7a45!important}
+
+.portal-admin-status{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px;border:1px solid #dce3ef;border-radius:16px;background:#f8faff}
+.portal-admin-status strong{display:block;color:#0b1736;margin-bottom:4px}
+.portal-switch{display:inline-flex;align-items:center;gap:10px;font-weight:800;white-space:nowrap}
+.portal-switch input{width:20px;height:20px}
+.portal-client-form{margin-top:18px;padding:18px;border:1px solid #e0e5ee;border-radius:16px;background:#fff}
+.portal-client-table td,.portal-client-table th{vertical-align:middle}
+.portal-client-badge{display:inline-flex;padding:4px 8px;border-radius:999px;background:#edf4ff;color:#174785;font-size:11px;font-weight:800}
+.portal-client-badge.active{background:#eaf8f0;color:#17643a}
+.portal-client-badge.inactive{background:#f3f3f3;color:#777}
+.portal-client-actions{display:flex;gap:7px;flex-wrap:wrap}
+@media(max-width:760px){.client-session-box{order:3;width:100%;justify-content:space-between}.client-login-card{padding:22px}.portal-admin-status{align-items:flex-start;flex-direction:column}}

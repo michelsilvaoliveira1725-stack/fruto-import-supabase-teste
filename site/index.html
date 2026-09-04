@@ -25,6 +25,18 @@
   </script>
 </head>
 <body>
+<div class="client-login-overlay hidden" id="clientLoginOverlay" role="dialog" aria-modal="true" aria-labelledby="clientLoginTitle">
+  <div class="client-login-card">
+    <span class="eyebrow">ACESSO EXCLUSIVO</span>
+    <h1 id="clientLoginTitle">Catálogo Fruto de Arte</h1>
+    <p>Entre com o login e a senha fornecidos pela Fruto de Arte.</p>
+    <div class="client-login-notice hidden" id="clientLoginNotice"></div>
+    <label>Login<input id="clientLogin" autocomplete="username" maxlength="160" placeholder="Seu login"></label>
+    <label>Senha<input id="clientPassword" type="password" autocomplete="current-password" maxlength="160" placeholder="Sua senha"></label>
+    <button type="button" class="primary" id="clientLoginButton">Entrar</button>
+    <small>Acesso liberado somente para clientes autorizados.</small>
+  </div>
+</div>
 <header class="site-header">
   <div class="topbar">
     <button class="brand-logo" id="homeLogo" aria-label="Voltar ao início">
@@ -41,6 +53,10 @@
     <div class="header-search hidden" id="headerSearch">
       <input id="search" placeholder="Pesquisar por produto, código ou categoria..." aria-label="Pesquisar produtos">
       <button id="searchBtn" aria-label="Pesquisar">⌕</button>
+    </div>
+    <div class="client-session-box hidden" id="clientSessionBox">
+      <span><b id="clientSessionName">Cliente</b><small id="clientSessionDiscount"></small></span>
+      <button type="button" id="clientLogout">Sair</button>
     </div>
     <button class="quote-button" id="listBtn"><span id="quoteButtonLabel">Orçamento</span> <span class="count" id="count">0</span></button>
   </div>
@@ -178,7 +194,7 @@
           <button class="download-pdf" id="downloadPdf">Baixar PDF</button>
           <button class="clear" id="clearList">Limpar lista</button>
         </div>
-        <p class="share-note" id="shareNote">No celular, o PDF abre diretamente. No computador, o WhatsApp cadastrado abre com o link do PDF do orçamento.</p>
+        <p class="share-note" id="shareNote">Ao finalizar, o WhatsApp cadastrado abre direto com o link do PDF do orçamento.</p>
       </section>
       <section class="quote-panel quote-items-panel">
         <div class="panel-head"><h3>Produtos selecionados</h3><p>Visual mais completo para conferência antes do envio.</p></div>

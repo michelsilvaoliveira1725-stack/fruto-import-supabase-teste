@@ -106,6 +106,8 @@ let removedVideoThumbs = [];
 const MAX_PRODUCT_IMAGES = 10;
 let currentSettings = { businessName: "Fruto de Arte", whatsapp: "5511996576368", home: DEFAULT_HOME, quote: DEFAULT_QUOTE };
 let quoteRequests = [];
+let portalClients = [];
+let portalEnabled = false;
 
 function notice(id, msg, type = "") {
   const el = $(id);
@@ -290,7 +292,7 @@ function showAuth() {
 }
 
 function setAdminSection(sectionId, persist = true) {
-  const allowed = new Set(["overviewSection", "productsSection", "homepageSection", "quotesSection", "serviceSection"]);
+  const allowed = new Set(["overviewSection", "productsSection", "homepageSection", "quotesSection", "serviceSection", "clientsSection"]);
   const target = allowed.has(sectionId) ? sectionId : "productsSection";
   activeAdminSection = target;
   document.querySelectorAll(".admin-section").forEach(section => {
@@ -304,6 +306,7 @@ document.querySelectorAll(".admin-section-tab").forEach(button => {
   });
   if (persist) localStorage.setItem("fruto_import_admin_section", target);
   if (target === "quotesSection" && token) loadQuoteRequests();
+  if (target === "clientsSection" && token) loadPortalClients();
 }
 
 function setProductBrandFilter(brand) {
@@ -1724,6 +1727,145 @@ async function loadQuoteRequests() {
   }
 }
 
+function portalClientNotice(message = "", type = "") {
+  notice("portalClientNotice", message, type);
+}
+
+function updatePortalModeUi() {
+  if (!$('portalEnabled')) return;
+  $('portalEnabled').checked = portalEnabled === true;
+  $('portalModeTitle').textContent = portalEnabled ? "Portal privado ativo" : "Site público";
+  $('portalModeText').textContent = portalEnabled
+    ? "Somente clientes ativos com login e senha conseguem acessar o catálogo."
+    : "Qualquer pessoa com o link pode acessar o catálogo, como funciona hoje.";
+}
+
+function resetPortalClientForm() {
+  if (!$('portalClientId')) return;
+  $('portalClientId').value = "";
+  $('portalClientName').value = "";
+  $('portalClientLogin').value = "";
+  $('portalClientPassword').value = "";
+  $('portalClientDiscount').value = "0";
+  $('portalClientActive').checked = true;
+  $('portalClientFormTitle').textContent = "Cadastrar cliente";
+  $('cancelPortalClientEdit').classList.add("hidden");
+}
+
+function renderPortalClients() {
+  const rows = $('portalClientRows');
+  if (!rows) return;
+  rows.textContent = "";
+  if (!portalClients.length) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 5; td.className = "muted"; td.textContent = "Nenhum cliente cadastrado.";
+    tr.appendChild(td); rows.appendChild(tr); return;
+  }
+  [...portalClients].sort((a,b)=>String(a.name||a.login).localeCompare(String(b.name||b.login),"pt-BR")).forEach(client => {
+    const tr = document.createElement("tr");
+    const nameTd = document.createElement("td");
+    const name = document.createElement("b"); name.textContent = client.name || "Cliente"; nameTd.appendChild(name);
+    const loginTd = document.createElement("td"); loginTd.textContent = client.login || "—";
+    const discountTd = document.createElement("td");
+    const disc = document.createElement("span"); disc.className = "portal-client-badge"; disc.textContent = `${String(Number(client.discountPercent||0)).replace(".", ",")}%`; discountTd.appendChild(disc);
+    const statusTd = document.createElement("td");
+    const status = document.createElement("span"); status.className = `portal-client-badge ${client.active !== false ? "active" : "inactive"}`; status.textContent = client.active !== false ? "Ativo" : "Bloqueado"; statusTd.appendChild(status);
+    const actionTd = document.createElement("td"); actionTd.className = "portal-client-actions";
+    const edit = document.createElement("button"); edit.type="button"; edit.className="secondary small-button"; edit.textContent="Editar";
+    edit.addEventListener("click", () => editPortalClient(client));
+    const del = document.createElement("button"); del.type="button"; del.className="danger small-button"; del.textContent="Excluir";
+    del.addEventListener("click", () => deletePortalClient(client));
+    actionTd.append(edit, del);
+    tr.append(nameTd, loginTd, discountTd, statusTd, actionTd);
+    rows.appendChild(tr);
+  });
+}
+
+async function loadPortalClients() {
+  if (!$('portalClientRows')) return;
+  try {
+    portalClientNotice("");
+    const d = await api("/api/client-access/admin");
+    portalEnabled = d.enabled === true;
+    portalClients = Array.isArray(d.clients) ? d.clients : [];
+    updatePortalModeUi();
+    renderPortalClients();
+  } catch (e) { portalClientNotice(e.message, "error"); }
+}
+
+async function savePortalMode() {
+  const btn = $('savePortalMode');
+  const next = $('portalEnabled').checked === true;
+  if (next && !portalClients.some(c => c.active !== false)) {
+    $('portalEnabled').checked = false;
+    portalClientNotice("Cadastre e ative pelo menos um cliente antes de fechar o site.", "error");
+    return;
+  }
+  if (next && !confirm("Ativar o portal privado? A partir disso, clientes precisarão de login e senha para acessar o catálogo.")) {
+    $('portalEnabled').checked = portalEnabled;
+    return;
+  }
+  btn.disabled = true;
+  try {
+    const d = await api("/api/client-access/admin", { method: "PUT", json: { enabled: next } });
+    portalEnabled = d.enabled === true;
+    portalClients = Array.isArray(d.clients) ? d.clients : portalClients;
+    updatePortalModeUi(); renderPortalClients();
+    portalClientNotice(portalEnabled ? "Portal privado ativado com sucesso." : "Site voltou ao modo público, como estava antes.", "success");
+  } catch (e) {
+    $('portalEnabled').checked = portalEnabled;
+    portalClientNotice(e.message, "error");
+  } finally { btn.disabled = false; }
+}
+
+function editPortalClient(client) {
+  $('portalClientId').value = client.id || "";
+  $('portalClientName').value = client.name || "";
+  $('portalClientLogin').value = client.login || "";
+  $('portalClientPassword').value = "";
+  $('portalClientDiscount').value = String(Number(client.discountPercent || 0));
+  $('portalClientActive').checked = client.active !== false;
+  $('portalClientFormTitle').textContent = "Editar cliente";
+  $('cancelPortalClientEdit').classList.remove("hidden");
+  document.querySelector('.portal-client-form')?.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+async function savePortalClient() {
+  const btn = $('savePortalClient');
+  const id = $('portalClientId').value.trim();
+  const payload = {
+    id,
+    name: $('portalClientName').value.trim(),
+    login: $('portalClientLogin').value.trim(),
+    password: $('portalClientPassword').value,
+    discountPercent: Number($('portalClientDiscount').value || 0),
+    active: $('portalClientActive').checked
+  };
+  if (!payload.name || !payload.login) { portalClientNotice("Preencha nome e login do cliente.", "error"); return; }
+  if (!id && String(payload.password || "").length < 6) { portalClientNotice("Para um novo cliente, informe uma senha com pelo menos 6 caracteres.", "error"); return; }
+  btn.disabled = true;
+  try {
+    const d = await api("/api/client-access/admin", { method: "POST", json: payload });
+    portalEnabled = d.enabled === true;
+    portalClients = Array.isArray(d.clients) ? d.clients : portalClients;
+    updatePortalModeUi(); renderPortalClients(); resetPortalClientForm();
+    portalClientNotice(id ? "Cliente atualizado com sucesso." : "Cliente cadastrado com sucesso.", "success");
+  } catch (e) { portalClientNotice(e.message, "error"); }
+  finally { btn.disabled = false; }
+}
+
+async function deletePortalClient(client) {
+  if (!confirm(`Excluir o acesso de ${client.name || client.login}?`)) return;
+  try {
+    const d = await api(`/api/client-access/admin?id=${encodeURIComponent(client.id)}`, { method: "DELETE" });
+    portalEnabled = d.enabled === true;
+    portalClients = Array.isArray(d.clients) ? d.clients : portalClients.filter(c => c.id !== client.id);
+    updatePortalModeUi(); renderPortalClients(); resetPortalClientForm();
+    portalClientNotice("Cliente excluído.", "success");
+  } catch (e) { portalClientNotice(e.message, "error"); }
+}
+
 function clearCatalogHero(brand) {
   const key=brand==="Sennelier"?"sennelier":brand==="Schmincke"?"schmincke":"raphael"; const prefix=key==="sennelier"?"Sennelier":key==="schmincke"?"Schmincke":"Raphael"; const cur=$(`current${prefix}CatalogHero`); const input=$(`${key}CatalogHeroFile`); const preview=$(`${key}CatalogHeroPreview`);
   cur.value=""; input.value=""; preview.src=""; preview.classList.add("hidden"); notice("mainNotice",`Imagem do catálogo ${brand} removida da prévia. Clique em Salvar página inicial para confirmar.`,"");
@@ -1767,6 +1909,10 @@ document.querySelectorAll(".availability-tab").forEach(button => {
   });
 });
 $("saveSettings").addEventListener("click", saveSettings);
+$("savePortalMode")?.addEventListener("click", savePortalMode);
+$("refreshPortalClients")?.addEventListener("click", loadPortalClients);
+$("savePortalClient")?.addEventListener("click", savePortalClient);
+$("cancelPortalClientEdit")?.addEventListener("click", resetPortalClientForm);
 $("saveHomeSettings").addEventListener("click", saveHomeSettings);
 $("saveHomeSettingsBottom").addEventListener("click", saveHomeSettings);
 $("resetSennelierHero").addEventListener("click", () => setHeroDefault("Sennelier"));

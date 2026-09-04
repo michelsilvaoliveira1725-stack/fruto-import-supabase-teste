@@ -89,6 +89,7 @@ let detailProductCode = "";
 let catalogVersion = "";
 let catalogRefreshTimer = null;
 let quoteFinalizeId = "";
+let clientPortal = { enabled: false, revision: "", authenticated: false, client: null };
 
 try {
   selected = JSON.parse(localStorage.getItem("fruto_import_list") || "{}");
@@ -159,11 +160,24 @@ function hasActiveDiscount(product) {
   return numericPrice(product.price) !== null && Boolean(product.discountActive) && discountValue(product.discountPercent) > 0;
 }
 
-function finalPrice(product) {
+function baseFinalPrice(product) {
   const price = numericPrice(product.price);
   if (price === null) return null;
   const discount = discountValue(product.discountPercent);
   return hasActiveDiscount(product) ? Math.round(price * (1 - discount / 100) * 100) / 100 : price;
+}
+
+function clientDiscountPercent(product = null) {
+  const fromProduct = discountValue(product?.clientDiscountPercent);
+  if (fromProduct > 0) return fromProduct;
+  return discountValue(clientPortal?.client?.discountPercent);
+}
+
+function finalPrice(product) {
+  const price = baseFinalPrice(product);
+  if (price === null) return null;
+  const clientDiscount = clientDiscountPercent(product);
+  return clientDiscount > 0 ? Math.round(price * (1 - clientDiscount / 100) * 100) / 100 : price;
 }
 
 function formatMoney(value) {
@@ -267,6 +281,8 @@ function priceBlock(product) {
   wrap.className = "product-price";
   const price = numericPrice(product.price);
   const boxSale = salePack(product) > 1;
+  const productPromo = hasActiveDiscount(product);
+  const clientDiscount = clientDiscountPercent(product);
 
   if (price === null) {
     const consult = document.createElement("span");
@@ -276,24 +292,27 @@ function priceBlock(product) {
     return wrap;
   }
 
-  const addUnitSuffix = () => {
-    if (!boxSale) return;
-    const suffix = document.createElement("span");
-    suffix.className = "price-unit-suffix";
-    suffix.textContent = "/ unidade";
-    wrap.appendChild(suffix);
-  };
-
-  if (hasActiveDiscount(product)) {
+  if (productPromo || clientDiscount > 0) {
     const top = document.createElement("div");
     top.className = "price-promo-line";
     const old = document.createElement("span");
     old.className = "price-old";
     old.textContent = formatMoney(price);
-    const badge = document.createElement("span");
-    badge.className = "discount-badge";
-    badge.textContent = `-${String(discountValue(product.discountPercent)).replace(".", ",")}%`;
-    top.append(old, badge);
+    top.appendChild(old);
+
+    if (productPromo) {
+      const badge = document.createElement("span");
+      badge.className = "discount-badge";
+      badge.textContent = `-${String(discountValue(product.discountPercent)).replace(".", ",")}%`;
+      top.appendChild(badge);
+    }
+    if (clientDiscount > 0) {
+      const clientBadge = document.createElement("span");
+      clientBadge.className = "discount-badge client-discount-badge";
+      clientBadge.textContent = `Cliente -${String(clientDiscount).replace(".", ",")}%`;
+      top.appendChild(clientBadge);
+    }
+
     const currentLine = document.createElement("div");
     currentLine.className = "price-current-line";
     const current = document.createElement("strong");
@@ -555,6 +574,145 @@ function applyQuoteSettings() {
   $("sendWhatsApp").textContent = "Gerar PDF + WhatsApp";
   $("shareNote").textContent = "Ao finalizar, o WhatsApp cadastrado abre direto com o link do PDF do orçamento.";
   $("shareNote").classList.toggle("hidden", !q.showShareNote);
+}
+
+function portalNotice(message = "", type = "") {
+  const el = $("clientLoginNotice");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `client-login-notice ${type}`;
+  el.classList.toggle("hidden", !message);
+}
+
+function updateClientSessionUi() {
+  const box = $("clientSessionBox");
+  if (!box) return;
+  const client = clientPortal?.client;
+  const visible = Boolean(clientPortal.enabled && clientPortal.authenticated && client);
+  box.classList.toggle("hidden", !visible);
+  if (!visible) return;
+  $("clientSessionName").textContent = client.name || client.login || "Cliente";
+  const discount = discountValue(client.discountPercent);
+  $("clientSessionDiscount").textContent = discount > 0 ? `${String(discount).replace(".", ",")}% de desconto` : "Preço padrão";
+}
+
+function showClientLogin(message = "") {
+  const overlay = $("clientLoginOverlay");
+  if (!overlay) return;
+  overlay.classList.remove("hidden");
+  document.body.classList.add("portal-locked");
+  closeDrawer();
+  if (message) portalNotice(message, "error");
+  setTimeout(() => $("clientLogin")?.focus(), 50);
+}
+
+function hideClientLogin() {
+  $("clientLoginOverlay")?.classList.add("hidden");
+  document.body.classList.remove("portal-locked");
+  portalNotice("");
+}
+
+async function fetchPortalStatus() {
+  const r = await fetch("/api/client-access/status", { cache: "no-store" });
+  if (!r.ok) throw new Error("Não foi possível verificar o acesso do catálogo.");
+  return await r.json();
+}
+
+async function applyPortalStatus(next) {
+  const previous = clientPortal;
+  clientPortal = {
+    enabled: next?.enabled === true,
+    revision: String(next?.revision || ""),
+    authenticated: next?.authenticated === true,
+    client: next?.client || null
+  };
+  const changed = previous.enabled !== clientPortal.enabled ||
+    previous.revision !== clientPortal.revision ||
+    previous.authenticated !== clientPortal.authenticated ||
+    String(previous.client?.id || "") !== String(clientPortal.client?.id || "") ||
+    Number(previous.client?.discountPercent || 0) !== Number(clientPortal.client?.discountPercent || 0);
+
+  updateClientSessionUi();
+  if (clientPortal.enabled && !clientPortal.authenticated) {
+    products = [];
+    updateLandingCounts();
+    showClientLogin();
+  } else {
+    hideClientLogin();
+  }
+  return changed;
+}
+
+async function refreshPortalAccess() {
+  try { return await applyPortalStatus(await fetchPortalStatus()); }
+  catch { return false; }
+}
+
+async function clientLoginSubmit() {
+  const button = $("clientLoginButton");
+  if (!button) return;
+  const login = $("clientLogin")?.value.trim() || "";
+  const password = $("clientPassword")?.value || "";
+  if (!login || !password) { portalNotice("Informe login e senha.", "error"); return; }
+  button.disabled = true;
+  button.textContent = "Entrando...";
+  portalNotice("");
+  try {
+    const r = await fetch("/api/client-access/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ login, password }), cache: "no-store"
+    });
+    let data = {}; try { data = await r.json(); } catch {}
+    if (!r.ok) throw new Error(data.error || "Não foi possível entrar.");
+    await applyPortalStatus({ enabled: true, authenticated: true, client: data.client, revision: data.revision });
+    if ($("clientPassword")) $("clientPassword").value = "";
+    await loadCatalogData();
+    toast(`Bem-vindo, ${data.client?.name || "cliente"}.`);
+  } catch (e) { portalNotice(e.message || "Login ou senha inválidos.", "error"); }
+  finally { button.disabled = false; button.textContent = "Entrar"; }
+}
+
+async function clientLogout() {
+  try { await fetch("/api/client-access/logout", { method: "POST", cache: "no-store" }); } catch {}
+  clientPortal = { ...clientPortal, authenticated: false, client: null };
+  updateClientSessionUi();
+  products = [];
+  selected = {};
+  save();
+  updateLandingCounts();
+  if (clientPortal.enabled) showClientLogin();
+  else hideClientLogin();
+}
+
+async function loadCatalogData() {
+  const catalogResponse = await fetch("/api/products", { cache: "no-store" });
+  if (catalogResponse.status === 401) {
+    const data = await catalogResponse.json().catch(() => ({}));
+    clientPortal = { ...clientPortal, enabled: true, authenticated: false, client: null };
+    showClientLogin(data.error || "Faça login para acessar o catálogo.");
+    return false;
+  }
+  if (!catalogResponse.ok) throw new Error("Catálogo indisponível.");
+  const catalogData = await catalogResponse.json();
+  products = Array.isArray(catalogData.products) ? catalogData.products : [];
+  if (catalogData.client) {
+    clientPortal = { ...clientPortal, enabled: true, authenticated: true, client: catalogData.client, revision: String(catalogData.portalRevision || clientPortal.revision || "") };
+    updateClientSessionUi();
+  }
+  catalogVersion = await fetchCatalogVersion();
+  for (const code of Object.keys(selected)) {
+    const product = products.find(item => item.code === code);
+    if (!product || !isAvailable(product)) delete selected[code];
+    else {
+      const normalized = normalizeQtyForProduct(selected[code], product);
+      if (!normalized) delete selected[code]; else selected[code] = normalized;
+    }
+  }
+  save();
+  updateLandingCounts();
+  if (currentBrand) { categories(); render(); }
+  renderItems();
+  return true;
 }
 
 function updateLandingCounts() {
@@ -1306,12 +1464,25 @@ async function fetchCatalogVersion() {
 
 async function refreshCatalogNow({ force = false, silent = false } = {}) {
   try {
+    if (clientPortal.enabled && !clientPortal.authenticated) return false;
     const version = await fetchCatalogVersion();
     if (!force && version && catalogVersion && version === catalogVersion) return false;
     const r = await fetch("/api/products", { cache: "no-store" });
+    if (r.status === 401) {
+      clientPortal = { ...clientPortal, enabled: true, authenticated: false, client: null };
+      products = [];
+      updateClientSessionUi();
+      updateLandingCounts();
+      showClientLogin("Sua sessão expirou. Entre novamente.");
+      return false;
+    }
     if (!r.ok) return false;
     const d = await r.json();
     products = Array.isArray(d.products) ? d.products : [];
+    if (d.client) {
+      clientPortal = { ...clientPortal, enabled: true, authenticated: true, client: d.client, revision: String(d.portalRevision || clientPortal.revision || "") };
+      updateClientSessionUi();
+    }
     if (version) catalogVersion = version;
     for (const code of Object.keys(selected)) {
       const product = products.find(item => item.code === code);
@@ -1332,9 +1503,12 @@ async function refreshCatalogNow({ force = false, silent = false } = {}) {
 
 function startCatalogAutoRefresh() {
   clearInterval(catalogRefreshTimer);
-  catalogRefreshTimer = setInterval(() => {
+  catalogRefreshTimer = setInterval(async () => {
     if (!document.hidden) {
-      refreshCatalogNow({ silent: true });
+      const portalChanged = await refreshPortalAccess();
+      if (!clientPortal.enabled || clientPortal.authenticated) {
+        await refreshCatalogNow({ force: portalChanged, silent: true });
+      }
       refreshSettingsNow();
     }
   }, 7000);
@@ -1504,28 +1678,25 @@ async function load() {
   })();
 
   try {
-    const catalogResponse = await fetch("/api/products", { cache: "no-store" });
-    if (!catalogResponse.ok) throw new Error("Catálogo indisponível.");
-    const catalogData = await catalogResponse.json();
-    products = Array.isArray(catalogData.products) ? catalogData.products : [];
-    catalogVersion = await fetchCatalogVersion();
-    for (const code of Object.keys(selected)) {
-      const product = products.find(item => item.code === code);
-      if (!product || !isAvailable(product)) delete selected[code];
-      else {
-        const normalized = normalizeQtyForProduct(selected[code], product);
-        if (!normalized) delete selected[code]; else selected[code] = normalized;
-      }
-    }
-    save();
+    const portalStatus = await fetchPortalStatus();
+    await applyPortalStatus(portalStatus);
     await settingsTask;
-    updateLandingCounts();
-    renderItems();
-  } catch {
+
+    if (clientPortal.enabled && !clientPortal.authenticated) {
+      updateLandingCounts();
+      renderItems();
+      return;
+    }
+
+    await loadCatalogData();
+  } catch (e) {
     products = [];
     await settingsTask;
     updateLandingCounts();
-    toast("Não foi possível carregar o catálogo. Atualize a página em alguns instantes.");
+    renderItems();
+    if (!(clientPortal.enabled && !clientPortal.authenticated)) {
+      toast(e?.message || "Não foi possível carregar o catálogo. Atualize a página em alguns instantes.");
+    }
   }
 }
 
@@ -1544,6 +1715,10 @@ $("drawerOverlay").addEventListener("click", closeDrawer);
 $("clearList").addEventListener("click", clearList);
 $("sendWhatsApp").addEventListener("click", sendPdf);
 $("downloadPdf").addEventListener("click", downloadPdf);
+$("clientLoginButton")?.addEventListener("click", clientLoginSubmit);
+$("clientPassword")?.addEventListener("keydown", e => { if (e.key === "Enter") clientLoginSubmit(); });
+$("clientLogin")?.addEventListener("keydown", e => { if (e.key === "Enter") clientLoginSubmit(); });
+$("clientLogout")?.addEventListener("click", clientLogout);
 $("lightboxClose").addEventListener("click", closeLightbox);
 $("videoModalClose").addEventListener("click", closeVideo);
 $("productDetailClose").addEventListener("click", closeProductDetail);
@@ -1552,16 +1727,18 @@ $("videoModal").addEventListener("click", e => { if (e.target === $("videoModal"
 $("lightboxPrev").addEventListener("click", () => moveLightbox(-1));
 $("lightboxNext").addEventListener("click", () => moveLightbox(1));
 $("imageLightbox").addEventListener("click", e => { if (e.target === $("imageLightbox")) closeLightbox(); });
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) {
-    refreshCatalogNow({ silent: true });
-    refreshSettingsNow();
+async function refreshAccessAndCatalog() {
+  const portalChanged = await refreshPortalAccess();
+  if (!clientPortal.enabled || clientPortal.authenticated) {
+    await refreshCatalogNow({ force: portalChanged, silent: true });
   }
-});
-window.addEventListener("focus", () => {
-  refreshCatalogNow({ silent: true });
   refreshSettingsNow();
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshAccessAndCatalog();
 });
+window.addEventListener("focus", refreshAccessAndCatalog);
 
 if ($("customerCep")) {
   $("customerCep").addEventListener("input", e => {
