@@ -1,4 +1,5 @@
 import { requireAdmin, json } from "../lib/auth.mjs";
+import { getPortalState, clientFromRequest, clientPublic } from "../lib/client-portal.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_KEY = Netlify.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
@@ -42,7 +43,22 @@ export default async (req, context) => {
   const code = context.params.code ? decodeURIComponent(context.params.code) : "";
 
   if (req.method === "GET") {
-    try { return json(await publicCatalog()); }
+    try {
+      const data = await publicCatalog();
+      // O ADM continua consultando o catálogo normalmente mesmo com o portal privado ativo.
+      if (await requireAdmin(req)) return json(data);
+
+      const portal = await getPortalState();
+      if (!portal.enabled) return json(data);
+
+      const client = await clientFromRequest(req, portal);
+      if (!client) return json({ error: "Faça login para acessar o catálogo.", portalRequired: true }, 401);
+
+      const products = Array.isArray(data) ? data : (Array.isArray(data?.products) ? data.products : []);
+      const mapped = products.map(product => ({ ...product, clientDiscountPercent: client.discountPercent || 0 }));
+      const base = Array.isArray(data) ? {} : data;
+      return json({ ...base, products: mapped, portalEnabled: true, client: clientPublic(client), portalRevision: portal.updatedAt });
+    }
     catch (e) { console.error(e); return json({ error: "Não foi possível carregar o catálogo." }, 502); }
   }
 

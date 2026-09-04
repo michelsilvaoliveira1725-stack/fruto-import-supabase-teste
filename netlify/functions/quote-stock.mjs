@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { getAuthConfig, signToken } from "../lib/auth.mjs";
+import { getAuthConfig, signToken, requireAdmin } from "../lib/auth.mjs";
+import { getPortalState, clientFromRequest } from "../lib/client-portal.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_ANON_KEY = Netlify.env.get("SUPABASE_ANON_KEY") || Netlify.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
@@ -22,6 +23,11 @@ async function internalAdminToken() {
 
 export default async (req) => {
   if (req.method !== "POST") return json({ error: "Método não permitido." }, 405);
+
+  const portal = await getPortalState();
+  if (portal.enabled && !(await requireAdmin(req)) && !(await clientFromRequest(req, portal))) {
+    return json({ error: "Faça login para finalizar o orçamento.", portalRequired: true }, 401);
+  }
 
   let body;
   try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }

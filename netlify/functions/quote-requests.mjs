@@ -1,4 +1,5 @@
 import { getAuthConfig, signToken, requireAdmin, json } from "../lib/auth.mjs";
+import { getPortalState, clientFromRequest, clientDiscount } from "../lib/client-portal.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_ANON_KEY = Netlify.env.get("SUPABASE_ANON_KEY") || Netlify.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
@@ -34,15 +35,21 @@ function pdfBodyFromQuote(quote = {}) {
     customer: String(quote.customer_name || quote.customer || ""),
     cep: String(quote.cep || ""),
     address: String(quote.address || ""),
-    note: String(quote.note || "")
+    note: String(quote.note || ""),
+    clientDiscountPercent: clientDiscount(quote.client_discount_percent ?? quote.clientDiscountPercent ?? 0),
+    portalClientName: String(quote.portal_client_name || quote.portalClientName || "")
   };
 }
 
-async function generatePdfBase64(req, quote) {
+async function generatePdfBase64(req, quote, { adminOverride = false } = {}) {
   const pdfUrl = new URL("/api/quote-pdf", req.url);
+  const headers = new Headers({ "Content-Type": "application/json" });
+  const cookie = req.headers.get("cookie") || "";
+  if (cookie) headers.set("Cookie", cookie);
+  if (adminOverride) headers.set("Authorization", `Bearer ${await internalAdminToken()}`);
   const r = await fetch(pdfUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(pdfBodyFromQuote(quote)),
     cache: "no-store"
   });
@@ -55,8 +62,8 @@ async function generatePdfBase64(req, quote) {
   return Buffer.from(bytes).toString("base64");
 }
 
-async function generateAndStorePdf(req, quoteId, quote) {
-  const pdfBase64 = await generatePdfBase64(req, quote);
+async function generateAndStorePdf(req, quoteId, quote, options = {}) {
+  const pdfBase64 = await generatePdfBase64(req, quote, options);
   return await callEdge({ action: "store-pdf", quoteId, pdfBase64 });
 }
 
@@ -70,13 +77,28 @@ export default async (req) => {
         if (!(await requireAdmin(req))) return json({ error: "Sessão inválida ou expirada." }, 401);
         const quoteId = String(body?.quoteId || "").trim();
         const detail = await callEdge({ action: "detail", quoteId });
-        await generateAndStorePdf(req, quoteId, detail.quote || {});
+        await generateAndStorePdf(req, quoteId, detail.quote || {}, { adminOverride: true });
         return json({ ok: true, quoteId, pdfStored: true }, 200);
       }
 
-      // A criação é pública, mas o Supabase só aceita um quote_id que já foi
-      // realmente finalizado pelo controle de estoque.
-      const data = await callEdge({ action: "save", ...body });
+      // Se o portal estiver ativo, só um cliente autenticado pode registrar o orçamento.
+      const portal = await getPortalState();
+      let portalClient = null;
+      if (portal.enabled) {
+        portalClient = await clientFromRequest(req, portal);
+        if (!portalClient) return json({ error: "Faça login para finalizar o orçamento.", portalRequired: true }, 401);
+      }
+
+      // O Supabase só aceita um quote_id que já foi realmente finalizado pelo controle de estoque.
+      const clientFields = portalClient ? {
+        portalClientId: portalClient.id,
+        portalClientName: portalClient.name,
+        portalClientLogin: portalClient.login,
+        clientDiscountPercent: clientDiscount(portalClient.discountPercent)
+      } : {
+        portalClientId: "", portalClientName: "", portalClientLogin: "", clientDiscountPercent: 0
+      };
+      const data = await callEdge({ action: "save", ...body, ...clientFields });
       const quoteId = String(body?.quoteId || data?.quoteId || "").trim();
       let pdfStored = false;
       let pdfWarning = "";
@@ -87,7 +109,9 @@ export default async (req) => {
           customer_name: body?.customer,
           cep: body?.cep,
           address: body?.address,
-          note: body?.note
+          note: body?.note,
+          portalClientName: portalClient?.name || "",
+          clientDiscountPercent: portalClient ? clientDiscount(portalClient.discountPercent) : 0
         });
         pdfStored = true;
       } catch (e) {
@@ -122,7 +146,7 @@ export default async (req) => {
         let pdfStored = false;
         let pdfWarning = "";
         try {
-          await generateAndStorePdf(req, quoteId, detail.quote || {});
+          await generateAndStorePdf(req, quoteId, detail.quote || {}, { adminOverride: true });
           pdfStored = true;
         } catch (e) {
           console.error("quote-edit-pdf", e);

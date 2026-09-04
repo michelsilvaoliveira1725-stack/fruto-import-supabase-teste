@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getStore } from "@netlify/blobs";
-import { json } from "../lib/auth.mjs";
+import { requireAdmin, json } from "../lib/auth.mjs";
+import { getPortalState, clientFromRequest, clientDiscount, applyClientDiscount } from "../lib/client-portal.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_KEY = Netlify.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
@@ -70,11 +71,17 @@ function hasActiveDiscount(product) {
   return numericPrice(product.price) !== null && Boolean(product.discountActive) && discountValue(product.discountPercent) > 0;
 }
 
-function finalPrice(product) {
+function baseFinalPrice(product) {
   const price = numericPrice(product.price);
   if (price === null) return null;
   const discount = discountValue(product.discountPercent);
   return hasActiveDiscount(product) ? Math.round(price * (1 - discount / 100) * 100) / 100 : price;
+}
+
+function finalPrice(product, clientDiscountPercent = 0) {
+  const price = baseFinalPrice(product);
+  if (price === null) return null;
+  return applyClientDiscount(price, clientDiscountPercent);
 }
 
 function money(value) {
@@ -164,6 +171,22 @@ export default async (req) => {
   const requested = Array.isArray(body.items) ? body.items.slice(0, 250) : [];
   if (!requested.length) return json({ error: "Adicione produtos antes de gerar o PDF." }, 400);
 
+  const portal = await getPortalState();
+  const adminRequest = await requireAdmin(req);
+  let clientDiscountPercent = 0;
+  let portalClientName = "";
+
+  // Em regenerações feitas pelo ADM, preserva a condição comercial salva no orçamento.
+  if (adminRequest && Object.prototype.hasOwnProperty.call(body, "clientDiscountPercent")) {
+    clientDiscountPercent = clientDiscount(body.clientDiscountPercent);
+    portalClientName = clean(body.portalClientName, 120);
+  } else if (portal.enabled) {
+    const client = await clientFromRequest(req, portal);
+    if (!client) return json({ error: "Faça login para gerar o orçamento.", portalRequired: true }, 401);
+    clientDiscountPercent = clientDiscount(client.discountPercent);
+    portalClientName = clean(client.name, 120);
+  }
+
   let products = [];
   try {
     products = await publicCatalog();
@@ -187,7 +210,7 @@ export default async (req) => {
     const qty = normalizeQty(row.qty, p);
     if (!qty) return null;
 
-    const unitPrice = finalPrice(p);
+    const unitPrice = finalPrice(p, clientDiscountPercent);
 
     return {
       ...p,
@@ -195,6 +218,7 @@ export default async (req) => {
       unitPrice,
       subtotal: unitPrice === null ? null : Math.round(unitPrice * qty * 100) / 100,
       discount: hasActiveDiscount(p) ? discountValue(p.discountPercent) : 0,
+      clientDiscountPercent,
       basePrice: numericPrice(p.price)
     };
   }).filter(Boolean);
@@ -241,6 +265,12 @@ export default async (req) => {
   if (q.showCustomer && customer) {
     page.drawText(safePdfText(`Cliente: ${customer}`), { x: margin, y, size: 10, font: bold, color: navy });
     y -= 20;
+  }
+
+  if (clientDiscountPercent > 0) {
+    const who = portalClientName ? ` (${portalClientName})` : "";
+    page.drawText(safePdfText(`Condicao especial do cliente${who}: ${String(clientDiscountPercent).replace(".", ",")}% de desconto`), { x: margin, y, size: 9, font: bold, color: green });
+    y -= 18;
   }
 
   if (q.showAddress && (address || cep)) {
