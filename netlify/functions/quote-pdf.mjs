@@ -113,10 +113,10 @@ function normalizeQty(value, product) {
 }
 
 const DEFAULT_QUOTE = {
-  pdfHeaderTitle:"FRUTO IMPORTADORA",
+  pdfHeaderTitle:"FRUTO DE ARTE",
   pdfHeaderSubtitle:"Solicitação de Orçamento",
-  pdfContactLabel:"WhatsApp Fruto Importadora",
-  pdfFooterText:"Fruto Importadora",
+  pdfContactLabel:"WhatsApp Fruto de Arte",
+  pdfFooterText:"Fruto de Arte",
   showCustomer:true,
   showAddress:false,
   showNote:true,
@@ -125,9 +125,23 @@ const DEFAULT_QUOTE = {
   columns:{ product:true, code:true, series:false, salePack:false, quantity:true, unitPrice:true, subtotal:false }
 };
 
+function brandText(value) {
+  return String(value ?? "")
+    .replace(/FRUTO IMPORTADORA/g, "FRUTO DE ARTE")
+    .replace(/Fruto Importadora/g, "Fruto de Arte")
+    .replace(/FRUTO IMPORT(?!ADORA)/g, "FRUTO DE ARTE")
+    .replace(/Fruto Import(?!adora)/g, "Fruto de Arte");
+}
+
 function quoteSettings(raw) {
   const q = raw && typeof raw === "object" ? raw : {};
-  return { ...DEFAULT_QUOTE, ...q, columns: { ...DEFAULT_QUOTE.columns, ...(q.columns || {}) } };
+  const merged = { ...DEFAULT_QUOTE, ...q, columns: { ...DEFAULT_QUOTE.columns, ...(q.columns || {}) } };
+  return {
+    ...merged,
+    pdfHeaderTitle: brandText(merged.pdfHeaderTitle),
+    pdfContactLabel: brandText(merged.pdfContactLabel),
+    pdfFooterText: brandText(merged.pdfFooterText)
+  };
 }
 
 function seriesLabel(value) {
@@ -159,7 +173,7 @@ export default async (req) => {
   }
 
   const settings = await getStore(SETTINGS_STORE).get(SETTINGS_KEY, { type: "json", consistency: "strong" }) || {
-    businessName: "Fruto Importadora",
+    businessName: "Fruto de Arte",
     whatsapp: "5511996576368"
   };
 
@@ -210,7 +224,7 @@ export default async (req) => {
     page = pdf.addPage(pageSize);
     const { width, height } = page.getSize();
     page.drawRectangle({ x: 0, y: height - 94, width, height: 94, color: navy });
-    page.drawText(safePdfText(q.pdfHeaderTitle || "FRUTO IMPORTADORA"), { x: margin, y: height - 50, size: 22, font: bold, color: white });
+    page.drawText(safePdfText(q.pdfHeaderTitle || "FRUTO DE ARTE"), { x: margin, y: height - 50, size: 22, font: bold, color: white });
     page.drawText(safePdfText(q.pdfHeaderSubtitle || "Solicitacao de Orcamento"), { x: margin, y: height - 73, size: 11, font: regular, color: white });
     y = height - 122;
   }
@@ -375,12 +389,12 @@ export default async (req) => {
 
   const phone = String(settings.whatsapp || "");
   if (phone) {
-    page.drawText(safePdfText(`${q.pdfContactLabel || "WhatsApp Fruto Importadora"}: +${phone}`), { x: margin, y, size: 9, font: regular, color: gray });
+    page.drawText(safePdfText(`${q.pdfContactLabel || "WhatsApp Fruto de Arte"}: +${phone}`), { x: margin, y, size: 9, font: regular, color: gray });
   }
 
   const pages = pdf.getPages();
   pages.forEach((p, i) => {
-    p.drawText(safePdfText(`${q.pdfFooterText || "Fruto Importadora"}  |  Pagina ${i + 1} de ${pages.length}`), { x: margin, y: 26, size: 8, font: regular, color: gray });
+    p.drawText(safePdfText(`${q.pdfFooterText || "Fruto de Arte"}  |  Pagina ${i + 1} de ${pages.length}`), { x: margin, y: 26, size: 8, font: regular, color: gray });
   });
 
   const bytes = await pdf.save();

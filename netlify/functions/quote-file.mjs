@@ -53,7 +53,7 @@ export default async (req) => {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="fruto-importadora-orcamento-${quoteId.slice(0, 8)}.pdf"`,
+        "Content-Disposition": `inline; filename="fruto-de-arte-orcamento-${quoteId.slice(0, 8)}.pdf"`,
         "Cache-Control": "private, no-store, max-age=0",
         "X-Content-Type-Options": "nosniff"
       }

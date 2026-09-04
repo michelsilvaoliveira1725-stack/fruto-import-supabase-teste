@@ -11,7 +11,7 @@ const DEFAULT_HOME = {
     logoImage: "",
     brandLabelPosition: "left",
     showBrandName: false,
-    brandName: "FRUTO IMPORTADORA",
+    brandName: "FRUTO DE ARTE",
     homeLabel: "Início",
     sennelierLabel: "Sennelier",
     schminckeLabel: "Schmincke",
@@ -19,13 +19,13 @@ const DEFAULT_HOME = {
     quoteLabel: "Orçamento",
     searchPlaceholder: "Pesquisar por produto, código ou categoria..."
   },
-  eyebrow: "CATÁLOGO DIGITAL · FRUTO IMPORTADORA",
+  eyebrow: "CATÁLOGO DIGITAL · FRUTO DE ARTE",
   title: "Três referências mundiais em materiais artísticos.",
   intro: "Explore os produtos Sennelier, Schmincke e Raphaël, monte sua seleção e solicite seu orçamento de forma rápida.",
   benefits: [
     { title: "Busca rápida", text: "Encontre por nome, código ou categoria." },
     { title: "Quantidade já na seleção", text: "Informe a quantidade desejada antes de adicionar ao orçamento." },
-    { title: "PDF + WhatsApp", text: "Gere o PDF e abra automaticamente a conversa com a Fruto Importadora." }
+    { title: "PDF + WhatsApp", text: "Gere o PDF e envie sua solicitação de forma rápida para a Fruto de Arte." }
   ],
   sennelier: {
     kicker: "Sennelier 🇫🇷",
@@ -63,10 +63,10 @@ const DEFAULT_HOME = {
 const DEFAULT_QUOTE = {
   title: "Minha solicitação",
   intro: "As quantidades já foram definidas na escolha dos produtos. Confira a solicitação antes de gerar o PDF.",
-  pdfHeaderTitle: "FRUTO IMPORTADORA",
+  pdfHeaderTitle: "FRUTO DE ARTE",
   pdfHeaderSubtitle: "Solicitação de Orçamento",
-  pdfContactLabel: "WhatsApp Fruto Importadora",
-  pdfFooterText: "Fruto Importadora",
+  pdfContactLabel: "WhatsApp Fruto de Arte",
+  pdfFooterText: "Fruto de Arte",
   showCustomer: true,
   showAddress: false,
   showNote: true,
@@ -87,7 +87,7 @@ const DEFAULT_VIDEOS = {
   items: Array.from({ length: 4 }, () => ({ enabled: false, tag: "Novidade", title: "", subtitle: "", duration: "", url: "", thumbnail: "" }))
 };
 
-const DEFAULTS = { businessName: "Fruto Importadora", whatsapp: "5511996576368", home: { ...DEFAULT_HOME, videos: DEFAULT_VIDEOS }, quote: DEFAULT_QUOTE };
+const DEFAULTS = { businessName: "Fruto de Arte", whatsapp: "5511996576368", home: { ...DEFAULT_HOME, videos: DEFAULT_VIDEOS }, quote: DEFAULT_QUOTE };
 
 function clean(value, max = 360) {
   return String(value ?? "").trim().slice(0, max);
@@ -95,6 +95,22 @@ function clean(value, max = 360) {
 
 function cleanPhone(value) {
   return String(value ?? "").replace(/\D/g, "").slice(0, 15);
+}
+
+function brandText(value) {
+  return String(value ?? "")
+    .replace(/FRUTO IMPORTADORA/g, "FRUTO DE ARTE")
+    .replace(/Fruto Importadora/g, "Fruto de Arte")
+    .replace(/FRUTO IMPORT(?!ADORA)/g, "FRUTO DE ARTE")
+    .replace(/Fruto Import(?!adora)/g, "Fruto de Arte");
+}
+
+function applyBranding(value) {
+  if (Array.isArray(value)) return value.map(applyBranding);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, applyBranding(item)]));
+  }
+  return typeof value === "string" ? brandText(value) : value;
 }
 
 function valueOr(source, key, fallback, max) {
@@ -222,12 +238,12 @@ function normalizeHome(raw, fallback = DEFAULTS.home) {
 
 function normalizeStored(current) {
   const source = current && typeof current === "object" ? current : {};
-  return {
-    businessName: "Fruto Importadora",
+  return applyBranding({
+    businessName: "Fruto de Arte",
     whatsapp: cleanPhone(source.whatsapp || DEFAULTS.whatsapp) || DEFAULTS.whatsapp,
     home: normalizeHome(source.home, DEFAULTS.home),
     quote: normalizeQuote(source.quote, DEFAULT_QUOTE)
-  };
+  });
 }
 
 async function readSettings() {
@@ -235,6 +251,7 @@ async function readSettings() {
   const current = await store.get(KEY, { type: "json", consistency: "strong" });
   const settings = normalizeStored(current);
   const storedRevision = Number(current?.home?.bannerRevision || 0);
+  let shouldPersist = false;
 
   // V17.6: aplica uma única vez os banners padronizados das três marcas.
   // Depois desta migração, novas trocas feitas pelo ADM continuam sendo preservadas normalmente.
@@ -243,25 +260,13 @@ async function readSettings() {
     settings.home.sennelier.catalogImage = DEFAULT_HOME.sennelier.catalogImage;
     settings.home.schmincke.catalogImage = DEFAULT_HOME.schmincke.catalogImage;
     settings.home.raphael.catalogImage = DEFAULT_HOME.raphael.catalogImage;
-
-    const brandText = value => String(value || "")
-      .replace(/FRUTO IMPORT(?!ADORA)/g, "FRUTO IMPORTADORA")
-      .replace(/Fruto Import(?!adora)/g, "Fruto Importadora");
-
-    settings.home.header.brandName = brandText(settings.home.header.brandName);
-    settings.home.eyebrow = brandText(settings.home.eyebrow);
-    settings.home.benefits = settings.home.benefits.map(item => ({
-      ...item,
-      title: brandText(item.title),
-      text: brandText(item.text)
-    }));
-    settings.quote.pdfHeaderTitle = brandText(settings.quote.pdfHeaderTitle);
-    settings.quote.pdfContactLabel = brandText(settings.quote.pdfContactLabel);
-    settings.quote.pdfFooterText = brandText(settings.quote.pdfFooterText);
-    settings.businessName = "Fruto Importadora";
-
-    await store.setJSON(KEY, settings);
+    shouldPersist = true;
   }
+
+  // V17.11: converte a identidade visual antiga para Fruto de Arte e grava a mudança.
+  if (JSON.stringify(current || {}) !== JSON.stringify(settings)) shouldPersist = true;
+  if (shouldPersist) await store.setJSON(KEY, settings);
+
   return settings;
 }
 
@@ -288,7 +293,7 @@ export default async (req) => {
     : current.home;
 
   const quote = body.quote && typeof body.quote === "object" ? normalizeQuote(body.quote, current.quote) : current.quote;
-  const settings = { businessName: "Fruto Importadora", whatsapp, home, quote };
+  const settings = applyBranding({ businessName: "Fruto de Arte", whatsapp, home, quote });
   await getStore(STORE).setJSON(KEY, settings);
   return json({ ok: true, ...settings });
 };
