@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const VERSION = "V17.15";
+  const VERSION = "V17.17";
   const STATUS = {
     novo: "Novo",
     em_analise: "Em análise",
@@ -114,9 +114,14 @@
     }
     if(!$id("crmTools")){
       const tools=document.createElement("div"); tools.className="crm-tools"; tools.id="crmTools";
-      tools.innerHTML=`<input id="crmSearch" type="search" placeholder="Buscar ORC, cliente, telefone ou e-mail..."><select id="crmStatus"><option value="all">Todos os status</option>${Object.entries(STATUS).map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select>`;
+      tools.innerHTML=`<input id="crmSearch" name="fruto_quote_search_v1717" type="search" value="" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" placeholder="Buscar ORC, cliente, telefone ou e-mail..."><select id="crmStatus"><option value="all">Todos os status</option>${Object.entries(STATUS).map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select>`;
       section.querySelector(".quote-checklist-list")?.before(tools);
-      $id("crmSearch")?.addEventListener("input",e=>{quoteSearch=String(e.target.value||"").toLowerCase().trim(); renderQuoteRequests();});
+      const crmSearchInput=$id("crmSearch");
+      if(crmSearchInput){
+        crmSearchInput.value=""; quoteSearch="";
+        setTimeout(()=>{ if(document.activeElement!==crmSearchInput){ crmSearchInput.value=""; quoteSearch=""; renderQuoteRequests(); } },250);
+        crmSearchInput.addEventListener("input",e=>{quoteSearch=String(e.target.value||"").toLowerCase().trim(); renderQuoteRequests();});
+      }
       $id("crmStatus")?.addEventListener("change",e=>{quoteStatus=e.target.value; renderQuoteRequests();});
     }
   }
