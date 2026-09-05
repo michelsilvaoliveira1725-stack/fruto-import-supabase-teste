@@ -1,11 +1,12 @@
-import { requireAdmin, json } from "../lib/auth.mjs";
+import { getAuthConfig, signToken, requireAdmin, json } from "../lib/auth.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_ANON_KEY = Netlify.env.get("SUPABASE_ANON_KEY") || Netlify.env.get("SUPABASE_PUBLISHABLE_KEY") || "";
 
-function edgeToken(req) {
-  const h = req.headers.get("authorization") || "";
-  return h.startsWith("Bearer ") ? h.slice(7) : "";
+async function internalAdminToken() {
+  const config = await getAuthConfig();
+  if (!config) throw new Error("Administrador não configurado.");
+  return signToken(config);
 }
 
 export default async (req) => {
@@ -15,7 +16,7 @@ export default async (req) => {
   let body;
   try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
 
-  const token = edgeToken(req);
+  const token = await internalAdminToken();
   const r = await fetch(`${SUPABASE_URL}/functions/v1/fruto-product-sale-pack`, {
     method: "POST",
     headers: {

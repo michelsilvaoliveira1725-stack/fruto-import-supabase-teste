@@ -1,21 +1,22 @@
 import { getStore } from "@netlify/blobs";
-import { requireAdmin, json } from "../lib/auth.mjs";
+import { getAuthConfig, signToken, requireAdmin, json } from "../lib/auth.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
 const SUPABASE_ANON_KEY = Netlify.env.get("SUPABASE_ANON_KEY") || "";
 const STORE = "fruto-import-images";
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-function adminToken(req) {
-  const h = req.headers.get("authorization") || "";
-  return h.startsWith("Bearer ") ? h.slice(7) : "";
+async function internalAdminToken() {
+  const config = await getAuthConfig();
+  if (!config) throw new Error("Administrador não configurado.");
+  return signToken(config);
 }
 
-async function edge(req, method, body) {
+async function edge(method, body) {
   const headers = {
     apikey: SUPABASE_ANON_KEY,
     Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    "x-fruto-admin-token": adminToken(req)
+    "x-fruto-admin-token": await internalAdminToken()
   };
   const r = await fetch(`${SUPABASE_URL}/functions/v1/fruto-admin-images`, { method, headers, body });
   let data = {};
@@ -45,7 +46,7 @@ export default async (req, context) => {
     if (!(file instanceof Blob)) return json({ error: "Selecione uma foto." }, 400);
     if (!ALLOWED.has(file.type)) return json({ error: "Use uma imagem JPG, PNG ou WebP." }, 400);
     const out = new FormData(); out.append("file", file, file.name || "imagem");
-    return await edge(req, "POST", out);
+    return await edge("POST", out);
   }
 
   if (req.method === "DELETE") {
@@ -56,7 +57,7 @@ export default async (req, context) => {
     let body = {};
     try { body = await req.json(); } catch {}
     const storageId = String(body?.id || "");
-    return await edge(req, "DELETE", JSON.stringify({ id: storageId }));
+    return await edge("DELETE", JSON.stringify({ id: storageId }));
   }
   return json({ error: "Método não permitido." }, 405);
 };

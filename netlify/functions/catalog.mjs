@@ -1,4 +1,4 @@
-import { requireAdmin, json } from "../lib/auth.mjs";
+import { getAuthConfig, signToken, requireAdmin, json } from "../lib/auth.mjs";
 import { getPortalState, clientFromRequest, clientPublic } from "../lib/client-portal.mjs";
 
 const SUPABASE_URL = Netlify.env.get("SUPABASE_URL") || "https://scwrzdwxnkjqkiawvdve.supabase.co";
@@ -16,13 +16,14 @@ async function publicCatalog() {
   return await r.json();
 }
 
-function edgeToken(req) {
-  const h = req.headers.get("authorization") || "";
-  return h.startsWith("Bearer ") ? h.slice(7) : "";
+async function internalAdminToken() {
+  const config = await getAuthConfig();
+  if (!config) throw new Error("Administrador não configurado.");
+  return signToken(config);
 }
 
-async function callWriteEdge(req, payload) {
-  const adminToken = edgeToken(req);
+async function callWriteEdge(payload) {
+  const adminToken = await internalAdminToken();
   const r = await fetch(`${SUPABASE_URL}/functions/v1/fruto-admin-products`, {
     method: "POST",
     headers: {
@@ -64,19 +65,19 @@ export default async (req, context) => {
 
   if (!(await requireAdmin(req))) return json({ error: "Acesso não autorizado." }, 401);
 
-  if (req.method === "DELETE") return await callWriteEdge(req, { action: "delete", code });
+  if (req.method === "DELETE") return await callWriteEdge({ action: "delete", code });
 
   let body;
   try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
 
   if (req.method === "PUT" && code === "bulk-price") {
-    return await callWriteEdge(req, { action: "bulk-price", ...body });
+    return await callWriteEdge({ action: "bulk-price", ...body });
   }
   if (req.method === "PUT" && code === "bulk-organize") {
-    return await callWriteEdge(req, { action: "bulk-organize", ...body });
+    return await callWriteEdge({ action: "bulk-organize", ...body });
   }
-  if (req.method === "POST") return await callWriteEdge(req, { action: "create", product: body });
-  if (req.method === "PUT") return await callWriteEdge(req, { action: "update", oldCode: code, product: body });
+  if (req.method === "POST") return await callWriteEdge({ action: "create", product: body });
+  if (req.method === "PUT") return await callWriteEdge({ action: "update", oldCode: code, product: body });
   return json({ error: "Método não permitido." }, 405);
 };
 
