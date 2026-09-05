@@ -12,9 +12,22 @@
     X-Frame-Options = "DENY"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://scwrzdwxnkjqkiawvdve.supabase.co; media-src 'self' blob: https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com; upgrade-insecure-requests"
 
 [[headers]]
   for = "/admin.html"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/admin-pro.js"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/site-v17-15.js"
   [headers.values]
     Cache-Control = "no-store"
 
