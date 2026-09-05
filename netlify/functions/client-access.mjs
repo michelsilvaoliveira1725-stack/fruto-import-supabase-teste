@@ -1,3 +1,5 @@
+import { getStore } from "@netlify/blobs";
+import { createHash } from "node:crypto";
 import { requireAdmin, json } from "../lib/auth.mjs";
 import {
   getPortalState, savePortalState, clientPublic, publicPortalState,
@@ -5,10 +7,31 @@ import {
   sessionCookie, clearSessionCookie
 } from "../lib/client-portal.mjs";
 
+const LIMIT_STORE = "fruto-client-login-limit";
+const LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 8;
+
 function responseJson(data, status = 200, headers = {}) {
   return Response.json(data, { status, headers: { "Cache-Control": "no-store", ...headers } });
 }
 function clean(value, max = 160) { return String(value ?? "").trim().slice(0, max); }
+function rateKey(req, login = "") {
+  const ip = req.headers.get("x-nf-client-connection-ip") || req.headers.get("x-forwarded-for") || "unknown";
+  return createHash("sha256").update(`${ip}|${String(login).toLowerCase()}`).digest("hex");
+}
+async function getRate(req, login) {
+  const key = rateKey(req, login); const store = getStore(LIMIT_STORE); const now = Date.now();
+  let state = await store.get(key, { type: "json", consistency: "strong" }) || { attempts: 0, firstAt: now, lockedUntil: 0 };
+  if (state.lockedUntil > now) return { key, store, state, blocked: true };
+  if (now - Number(state.firstAt || 0) > LIMIT_WINDOW_MS) state = { attempts: 0, firstAt: now, lockedUntil: 0 };
+  return { key, store, state, blocked: false };
+}
+async function failRate(info) {
+  const next = { ...info.state, attempts: Number(info.state.attempts || 0) + 1 };
+  if (next.attempts >= MAX_ATTEMPTS) next.lockedUntil = Date.now() + LIMIT_WINDOW_MS;
+  await info.store.setJSON(info.key, next);
+}
+async function clearRate(info) { await info.store.setJSON(info.key, { attempts: 0, firstAt: Date.now(), lockedUntil: 0 }); }
 
 export default async (req, context) => {
   const action = clean(context?.params?.action || new URL(req.url).pathname.split("/").pop(), 30).toLowerCase();
@@ -21,13 +44,16 @@ export default async (req, context) => {
 
   if (action === "login" && req.method === "POST") {
     if (!state.enabled) return json({ error: "O acesso exclusivo está desativado no momento." }, 409);
-    let body;
-    try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
+    let body; try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
     const login = clean(body?.login, 160).normalize("NFKC").toLowerCase();
+    const rl = await getRate(req, login);
+    if (rl.blocked) return json({ error: "Muitas tentativas. Aguarde alguns minutos e tente novamente." }, 429);
     const client = state.clients.find(c => c.login === login && c.active !== false);
     if (!client || !passwordMatches(body?.password || "", client)) {
+      await failRate(rl);
       return json({ error: "Login ou senha inválidos." }, 401);
     }
+    await clearRate(rl);
     const token = signClientSession(state, client);
     return responseJson({ ok: true, client: clientPublic(client), revision: state.updatedAt }, 200, { "Set-Cookie": sessionCookie(token) });
   }
@@ -40,55 +66,34 @@ export default async (req, context) => {
   if (!(await requireAdmin(req))) return json({ error: "Acesso não autorizado." }, 401);
 
   if (req.method === "GET") {
-    return json({
-      ok: true,
-      enabled: state.enabled,
-      revision: state.updatedAt,
-      clients: state.clients.map(clientPublic)
-    });
+    return json({ ok: true, enabled: state.enabled, revision: state.updatedAt, clients: state.clients.map(clientPublic) });
   }
 
   if (req.method === "PUT") {
-    let body;
-    try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
+    let body; try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
     const enabled = body?.enabled === true;
-    if (enabled && !state.clients.some(c => c.active !== false)) {
-      return json({ error: "Cadastre e ative pelo menos um cliente antes de fechar o site." }, 400);
-    }
+    if (enabled && !state.clients.some(c => c.active !== false)) return json({ error: "Cadastre e ative pelo menos um cliente antes de fechar o site." }, 400);
     state.enabled = enabled;
     const saved = await savePortalState(state);
     return json({ ok: true, enabled: saved.enabled, revision: saved.updatedAt, clients: saved.clients.map(clientPublic) });
   }
 
   if (req.method === "POST") {
-    let body;
-    try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
+    let body; try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
     const id = clean(body?.id, 80);
     const existingIndex = id ? state.clients.findIndex(c => c.id === id) : -1;
     const existing = existingIndex >= 0 ? state.clients[existingIndex] : null;
     let next;
     try {
-      next = makeClient({
-        id,
-        name: body?.name,
-        login: body?.login,
-        password: body?.password,
-        discountPercent: body?.discountPercent,
-        active: body?.active !== false
-      }, existing);
-    } catch (e) {
-      return json({ error: e.message || "Dados do cliente inválidos." }, 400);
-    }
+      next = makeClient({ id, name: body?.name, login: body?.login, password: body?.password, discountPercent: body?.discountPercent, active: body?.active !== false }, existing);
+    } catch (e) { return json({ error: e.message || "Dados do cliente inválidos." }, 400); }
     const duplicate = state.clients.find(c => c.login === next.login && c.id !== next.id);
     if (duplicate) return json({ error: "Já existe outro cliente com esse login." }, 409);
-
     if (state.enabled && existing && existing.active !== false && next.active === false) {
       const otherActive = state.clients.some(c => c.id !== existing.id && c.active !== false);
       if (!otherActive) return json({ error: "Desative primeiro o portal geral ou mantenha pelo menos um cliente ativo." }, 409);
     }
-
-    if (existingIndex >= 0) state.clients[existingIndex] = next;
-    else state.clients.push(next);
+    if (existingIndex >= 0) state.clients[existingIndex] = next; else state.clients.push(next);
     const saved = await savePortalState(state);
     return json({ ok: true, client: clientPublic(next), enabled: saved.enabled, revision: saved.updatedAt, clients: saved.clients.map(clientPublic) });
   }
@@ -109,7 +114,4 @@ export default async (req, context) => {
   return json({ error: "Método não permitido." }, 405);
 };
 
-export const config = {
-  path: "/api/client-access/:action",
-  method: ["GET", "POST", "PUT", "DELETE"]
-};
+export const config = { path: "/api/client-access/:action", method: ["GET", "POST", "PUT", "DELETE"] };

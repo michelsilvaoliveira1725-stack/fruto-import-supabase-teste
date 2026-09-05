@@ -33,6 +33,8 @@ function pdfBodyFromQuote(quote = {}) {
   return {
     items: Array.isArray(quote.items) ? quote.items : [],
     customer: String(quote.customer_name || quote.customer || ""),
+    phone: String(quote.phone || ""),
+    email: String(quote.email || ""),
     cep: String(quote.cep || ""),
     address: String(quote.address || ""),
     note: String(quote.note || ""),
@@ -47,12 +49,7 @@ async function generatePdfBase64(req, quote, { adminOverride = false } = {}) {
   const cookie = req.headers.get("cookie") || "";
   if (cookie) headers.set("Cookie", cookie);
   if (adminOverride) headers.set("Authorization", `Bearer ${await internalAdminToken()}`);
-  const r = await fetch(pdfUrl, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(pdfBodyFromQuote(quote)),
-    cache: "no-store"
-  });
+  const r = await fetch(pdfUrl, { method: "POST", headers, body: JSON.stringify(pdfBodyFromQuote(quote)), cache: "no-store" });
   if (!r.ok) {
     let msg = "Não foi possível gerar a cópia do PDF.";
     try { msg = (await r.json())?.error || msg; } catch {}
@@ -81,7 +78,6 @@ export default async (req) => {
         return json({ ok: true, quoteId, pdfStored: true }, 200);
       }
 
-      // Se o portal estiver ativo, só um cliente autenticado pode registrar o orçamento.
       const portal = await getPortalState();
       let portalClient = null;
       if (portal.enabled) {
@@ -89,15 +85,13 @@ export default async (req) => {
         if (!portalClient) return json({ error: "Faça login para finalizar o orçamento.", portalRequired: true }, 401);
       }
 
-      // O Supabase só aceita um quote_id que já foi realmente finalizado pelo controle de estoque.
       const clientFields = portalClient ? {
         portalClientId: portalClient.id,
         portalClientName: portalClient.name,
         portalClientLogin: portalClient.login,
         clientDiscountPercent: clientDiscount(portalClient.discountPercent)
-      } : {
-        portalClientId: "", portalClientName: "", portalClientLogin: "", clientDiscountPercent: 0
-      };
+      } : { portalClientId: "", portalClientName: "", portalClientLogin: "", clientDiscountPercent: 0 };
+
       const data = await callEdge({ action: "save", ...body, ...clientFields });
       const quoteId = String(body?.quoteId || data?.quoteId || "").trim();
       let pdfStored = false;
@@ -107,6 +101,8 @@ export default async (req) => {
           items: body?.items,
           customer: body?.customer,
           customer_name: body?.customer,
+          phone: body?.phone,
+          email: body?.email,
           cep: body?.cep,
           address: body?.address,
           note: body?.note,
@@ -134,10 +130,25 @@ export default async (req) => {
       let body;
       try { body = await req.json(); } catch { return json({ error: "Dados inválidos." }, 400); }
       const quoteId = String(body?.quoteId || "").trim();
+
+      if (body?.action === "commercial") {
+        return json(await callEdge({
+          action: "commercial", quoteId,
+          status: body?.status,
+          followUpAt: body?.followUpAt,
+          shipping: body?.shipping,
+          paymentTerms: body?.paymentTerms,
+          validityDays: body?.validityDays,
+          internalNote: body?.internalNote
+        }), 200);
+      }
+
       if (body?.action === "edit") {
         const edited = await callEdge({
           action: "edit", quoteId,
           customer: body?.customer,
+          phone: body?.phone,
+          email: body?.email,
           cep: body?.cep,
           address: body?.address,
           note: body?.note
@@ -154,6 +165,7 @@ export default async (req) => {
         }
         return json({ ...edited, pdfStored, pdfWarning }, 200);
       }
+
       return json(await callEdge({ action: "check", quoteId, checked: body?.checked === true }), 200);
     }
 
